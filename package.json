@@ -1,0 +1,31 @@
+{
+  "name": "yaml-pptr",
+  "version": "0.0.1",
+  "description": "A library to generate puppeteer browser controls through a YAML api.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "devDependencies": {
+    "typescript": "5.2.2"
+  },
+  "scripts": {
+    "build": "tsc -p ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bloom-Perf/yaml-pptr.git"
+  },
+  "keywords": [
+    "puppeteer",
+    "yaml",
+    "testing"
+  ],
+  "author": "Bloom-perf",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/Bloom-Perf/yaml-pptr/issues"
+  },
+  "homepage": "https://github.com/Bloom-Perf/yaml-pptr#readme"
+}
