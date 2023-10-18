@@ -14,7 +14,7 @@
     "build": "tsc -p ."
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com/bloom-perf"
+    "registry": "https://npm.pkg.github.com"
   },
   "repository": {
     "type": "git",
