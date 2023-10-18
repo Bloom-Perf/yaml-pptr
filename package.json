@@ -1,5 +1,5 @@
 {
-  "name": "yaml-pptr",
+  "name": "@bloom-perf/yaml-pptr",
   "version": "0.0.1",
   "description": "A library to generate puppeteer browser controls through a YAML api.",
   "main": "dist/index.js",
