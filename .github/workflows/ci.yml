@@ -1,0 +1,17 @@
+name: Yaml-pptr CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@bloom-perf'
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test

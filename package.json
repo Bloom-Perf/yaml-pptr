@@ -11,7 +11,8 @@
     "typescript": "5.2.2"
   },
   "scripts": {
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "test": "echo no tests for now"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
