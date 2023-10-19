@@ -1,12 +1,17 @@
 {
-    "compilerOptions": {
-      "module": "commonjs",
-      "target": "es2019",
-      "declaration": true,
-      "outDir": "./dist"
-    },
-    "include": [
-      "src/**/*"
-    ]
-  }
+  "compilerOptions": {
+    "strict": true,
+    "target": "esnext",
+    "lib": ["es2019"],
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "moduleResolution": "nodenext",
+    "declaration": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true, 
+    "forceConsistentCasingInFileNames": true,
+  },
+  "include": ["src"]
+}
   
