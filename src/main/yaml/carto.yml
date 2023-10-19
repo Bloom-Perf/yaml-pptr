@@ -1,0 +1,22 @@
+- kind: name
+  steps:
+    - kind: goto
+      url: "https://cartopresenceengare-mig-int.sncf.fr/#!"
+    - kind: click
+      cssSelector: "#login-btn"
+    - kind: wait
+      cssSelector: "#idToken1"
+    - kind: type
+      cssSelector: "#idToken1"
+      text: 'PNBD09221'
+    - kind: wait
+      cssSelector: "#idToken2"
+    - kind: type
+      cssSelector: "#idToken2"
+      text: 'Binks/To/Binks/2023'
+    - kind: click
+      cssSelector: 'input[name="callback_3"]'
+    - kind: wait
+      xpathSelector: '//button[@type="submit" and @name="decision" and @value="allow"]'
+    - kind: click
+      xpathSelector: '//button[@type="submit" and @name="decision" and @value="allow"]'
