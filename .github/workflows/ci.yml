@@ -13,5 +13,14 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@bloom-perf'
       - run: npm ci
-      - run: npm run build
-      - run: npm run test
+      - name: Build Typescript
+        run: npm run build
+      - name: Run Tests
+        run: npm run test
+      - name: Create Coverage folder
+        run: mkdir -p coverage
+      - name: NYC Coverage Report
+        uses: Tintef/nyc-reporter-action@0.1.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPORTER: 'text' # defaults to 'text-summary'
