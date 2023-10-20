@@ -1,2 +1,17 @@
+import * as p from "puppeteer";
+import { parseYaml } from "./yaml/parser";
+import { evalScenario } from "./puppet/interpreter";
+import { toDomain } from "./yaml/resolver";
 
-export const myFunction = () => "text";
+export const readYamlAndInterpret = (yaml: string) => {
+    const rootYaml = parseYaml(yaml);
+    const root = toDomain(rootYaml);
+
+    return async (b: p.Browser) => {
+
+        return Promise.all(root.scenarios.map(async scenario => {
+            const page = await b.newPage();
+            await evalScenario(page, scenario);
+        }))
+    };
+}
