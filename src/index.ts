@@ -1,11 +1,19 @@
 import * as p from "puppeteer";
 import { parseYaml } from "./yaml/parser";
 import { evalScenario } from "./puppet/interpreter";
-import { toDomain } from "./yaml/resolver";
+import { Resolver } from "./yaml/resolver";
 
 export const readYamlAndInterpret = (yaml: string) => {
     const rootYaml = parseYaml(yaml);
-    const root = toDomain(rootYaml);
+
+    const domainResolver = new Resolver((envVarName: string) => { 
+        const envVarValue = process.env[envVarName.substring(1)];
+        if (envVarValue) return envVarValue;
+
+        throw new Error(`Tried to resolve env variable ${envVarName} but was empty.`);
+    });
+    
+    const root = domainResolver.resolve(rootYaml);
 
     return async (b: p.Browser) => {
 

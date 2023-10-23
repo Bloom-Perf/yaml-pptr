@@ -7,20 +7,21 @@
 A library to generate puppeteer browser controls through a YAML api.
 
 ```yaml
-browser: FIREFOX # default CHROME
 run: SEQUENTIAL # default PARALLEL
 delaySeconds: 10 # default 0
 scenarios:
   - name: Scenario 1
+    location: $URL
+    workers: 50
     steps:
       - action: CLICK
-        selector: "#elementId1"
+        selectorCss: "#elementId1"
       - action: NAVIGATE
         url: "http://example.com/page1"
       - action: WAIT
         seconds: 3
       - action: INPUT
-        selector: ".inputField"
+        selectorCss: ".inputField"
         text: "Hello, World!"
       - action: SCROLL
         direction: DOWN
@@ -28,7 +29,7 @@ scenarios:
   - name: Scenario 2
     steps:
       - action: HOVER
-        selector: "#hoverElement"
+        selectorCss: "#hoverElement"
       - action: ASSERT_TEXT
         selector: ".output"
         expectedText: "Expected Output"

@@ -1,9 +1,11 @@
 
 import * as z from "zod";
 
+const urlOrEnv = z.string().url().or(z.string().startsWith("$"))
+
 const navigateStepZod = z.object({
     action: z.literal("NAVIGATE"),
-    url: z.string().url()
+    url: urlOrEnv
 })
 
 const stepZod = z.discriminatedUnion("action", [
@@ -12,7 +14,8 @@ const stepZod = z.discriminatedUnion("action", [
 
 const scenarioZod = z.object({
     name: z.string(),
-    steps: stepZod.array()
+    location: urlOrEnv.optional(),
+    steps: stepZod.array().optional()
 });
 
 export const rootZod = z.object({
