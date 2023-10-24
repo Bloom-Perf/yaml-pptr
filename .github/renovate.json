@@ -1,20 +1,3 @@
 {
-    "labels": ["dependencies"],
-    "packageRules": [
-      {
-        "matchPackagePatterns": ["eslint"],
-        "labels": ["linting"]
-      },
-      {
-        "matchDepTypes": ["optionalDependencies"],
-        "addLabels": ["optional"]
-      }
-    ],
-    "hostRules": [
-      {
-        "matchHost": "api.github.com",
-        "concurrentRequestLimit": 2,
-        "maxRequestsPerSecond": 2
-      }
-    ]
-  }
+  "extends": ["config:best-practices"]
+}
