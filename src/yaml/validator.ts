@@ -4,13 +4,10 @@ import * as z from "zod";
 const urlOrEnv = z.string().url().or(z.string().startsWith("$"))
 
 const navigateStepZod = z.object({
-    action: z.literal("NAVIGATE"),
-    url: urlOrEnv
-})
+    navigate: urlOrEnv
+});
 
-const stepZod = z.discriminatedUnion("action", [
-    navigateStepZod
-]);
+const stepZod = navigateStepZod;
 
 const scenarioZod = z.object({
     name: z.string(),

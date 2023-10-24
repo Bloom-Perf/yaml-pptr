@@ -8,10 +8,8 @@ describe("Yaml Parser", () => {
 scenarios:
     - name: Scenario 1
       steps:
-        - action: NAVIGATE
-          url: "http://example.com/page1"
-        - action: NAVIGATE
-          url: $TEST
+        - navigate: "http://example.com/page1"
+        - navigate: $TEST
     - name: Scenario 2
       location: $LOC
     - name: Scenario 3
@@ -19,10 +17,8 @@ scenarios:
 
         expect(test.scenarios).to.be.instanceOf(Array).and.lengthOf(3);
         expect(test.scenarios[0].name).to.be.equal("Scenario 1");
-        expect(test.scenarios[0].steps![0].action).to.be.equal("NAVIGATE");
-        expect(test.scenarios[0].steps![0].url).to.be.equal("http://example.com/page1");
-        expect(test.scenarios[0].steps![1].action).to.be.equal("NAVIGATE");
-        expect(test.scenarios[0].steps![1].url).to.be.equal("$TEST");
+        expect(test.scenarios[0].steps![0].navigate).to.be.equal("http://example.com/page1");
+        expect(test.scenarios[0].steps![1].navigate).to.be.equal("$TEST");
 
         expect(test.scenarios[1].name).to.be.equal("Scenario 2");
         expect(test.scenarios[1].location).to.be.equal("$LOC");

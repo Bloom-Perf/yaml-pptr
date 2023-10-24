@@ -1,6 +1,6 @@
 // Yaml model to Core model
 
-import { ActionType, ScenarioMode } from "../core/model";
+import { ActionType, Scenario, ScenarioMode } from "../core/model";
 import { RootYaml } from "./validator";
 
 type ScenarioYaml =  RootYaml["scenarios"][0];
@@ -15,11 +15,12 @@ export class Resolver {
 
     private step(step: StepYaml) {
         return {
-            ...step, actionType: ActionType.Navigate
+            actionType: ActionType.Navigate,
+            url: step.navigate
         }
     }
 
-    private scenario(scenario: ScenarioYaml) {
+    private scenario(scenario: ScenarioYaml): Scenario {
         return {
             name: scenario.name,
             mode: ScenarioMode.OneShot,
