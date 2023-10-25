@@ -10,13 +10,15 @@ type EnvVarResolve = (string) => string;
 type StepYaml = NonNullable<ScenarioYaml["steps"]>[0];
 
 export class Resolver {
-    constructor(private envVarResolve: EnvVarResolve) {}
+    constructor(private envVarResolve: EnvVarResolve) {
+        this.envVarResolve = (envVarWithDollar: string) => envVarResolve(envVarWithDollar.substring(1));
+    }
 
 
     private step(step: StepYaml) {
         return {
             actionType: ActionType.Navigate,
-            url: step.navigate
+            url: this.resolveUrlOrEnv(step.navigate)
         }
     }
 

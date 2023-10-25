@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import {parseYaml} from "../../src/yaml/parser"
 
 describe("Yaml Parser", () => {
-    it("parse basic", () => {
+    it("parses basic", () => {
 
         const test = parseYaml(`
 scenarios:

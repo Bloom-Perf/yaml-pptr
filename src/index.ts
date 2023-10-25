@@ -7,12 +7,12 @@ export const readYamlAndInterpret = (yaml: string) => {
     const rootYaml = parseYaml(yaml);
 
     const domainResolver = new Resolver((envVarName: string) => { 
-        const envVarValue = process.env[envVarName.substring(1)];
+        const envVarValue = process.env[envVarName];
         if (envVarValue) return envVarValue;
 
         throw new Error(`Tried to resolve env variable ${envVarName} but was empty.`);
     });
-    
+
     const root = domainResolver.resolve(rootYaml);
 
     return async (b: p.Browser) => {
