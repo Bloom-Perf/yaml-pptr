@@ -25,7 +25,7 @@ export class Resolver {
     private scenario(scenario: ScenarioYaml): Scenario {
         return {
             name: scenario.name,
-            mode: ScenarioMode.OneShot,
+            mode: {oneshot: scenario.workers || 1},
             actions: [
                 // location field in api generates the first navigate action
                 ...("location" in scenario 

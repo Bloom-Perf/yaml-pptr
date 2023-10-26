@@ -12,7 +12,7 @@ describe("Integration tests", () => {
             return Promise.resolve({
                 async goto(str: string) {
                     console.log(`-> goto ${str}`)
-                    g[str] = 1;
+                    g[str] = (g[str] || 0) + 1;
                     return Promise.resolve();
                 }
             });
@@ -32,6 +32,7 @@ scenarios:
         - navigate: "http://example.com/page1"
         - navigate: $TEST
     - name: Scenario 2
+      workers: 5
       location: $LOC
     - name: Scenario 3
       steps: []`);
@@ -44,6 +45,10 @@ scenarios:
             "http://test.com",
             "http://example.com/page1"
         ]);
+
+        expect(mockedBrowser.gotos()["http://loc.com"]).to.be.equal(5);
+        expect(mockedBrowser.gotos()["http://test.com"]).to.be.equal(1);
+        expect(mockedBrowser.gotos()["http://example.com/page1"]).to.be.equal(1);
 
     });
 });

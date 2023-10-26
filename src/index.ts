@@ -16,7 +16,6 @@ export const readYamlAndInterpret = (yaml: string) => {
     const root = domainResolver.resolve(rootYaml);
 
     return async (b: p.Browser) => {
-
         return Promise.all(root.scenarios.map(async scenario => {
             const page = await b.newPage();
             await evalScenario(page, scenario);

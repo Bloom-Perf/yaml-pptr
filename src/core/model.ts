@@ -9,9 +9,9 @@ export type NavigateAction = {
 
 export type Action = NavigateAction;
 
-export enum ScenarioMode {
-    OneShot,
-    Repeat
+export type ScenarioMode = {
+    oneshot: number} | {
+    repeat: number
 }
 
 export type Scenario = {
