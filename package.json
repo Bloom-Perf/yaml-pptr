@@ -9,7 +9,7 @@
   ],
   "devDependencies": {
     "@types/js-yaml": "4.0.8",
-    "puppeteer": "21.3.8",
+    "puppeteer": "21.4.1",
     "typescript": "5.2.2",
     "@istanbuljs/nyc-config-typescript":"1.0.2",
     "@types/mocha":"10.0.3"
