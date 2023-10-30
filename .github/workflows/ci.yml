@@ -20,7 +20,7 @@ jobs:
       - name: Create Coverage folder
         run: mkdir -p coverage
       - name: NYC Coverage Report
-        uses: Tintef/nyc-reporter-action@0.1.0
+        uses: Tintef/nyc-reporter-action@66a40cea2d02fdb0ac8fa045a7355cbbf9b991a1 # 0.2.5
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPORTER: 'text' # defaults to 'text-summary'
