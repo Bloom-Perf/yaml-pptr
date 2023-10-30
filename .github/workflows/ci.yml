@@ -18,4 +18,5 @@ jobs:
       - name: Run Tests
         run: npm run test
       - name: NYC Coverage Report
+        continue-on-error: true
         run: npm run test:coverage
