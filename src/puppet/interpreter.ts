@@ -1,19 +1,16 @@
 import * as p from "puppeteer";
 import { Action, ActionType, Scenario } from "../core/model";
 
-export const evalScenario = async (page: p.Page, scenario: Scenario): Promise<void[]> => {
+export const evalScenario = async (browser: p.Browser, scenario: Scenario): Promise<void[]> => {
 
-    if ("oneshot" in scenario.mode) {
-        return await evalSafely(scenario.mode.oneshot, scenario.name, async index => {
+    return await evalSafely(scenario.workers, scenario.name, async index => {
+        for (let i = 0; i < scenario.iterations; i++) {
+            const page = await browser.newPage();
             await evalScenarioOnce(scenario.name + ` (${index})`, scenario.actions, page);
-        });
-    }
-
-    return await evalSafely(scenario.mode.repeat, scenario.name, async index => {
-        while (true)
-            await evalScenarioOnce(scenario.name + ` (${index})`, scenario.actions, page);
+            await page.close();
+        }
     });
-    
+
 };
 
 const evalSafely = async <T>(nb: number, scenarioName: string, createElement: (indexd: number) => Promise<T>): Promise<void[]> =>

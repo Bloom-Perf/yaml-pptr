@@ -7,14 +7,14 @@
 A library to generate puppeteer browser controls through a YAML, scenario oriented api.
 
 ```yaml
-run: SEQUENTIAL # default PARALLEL
-delaySeconds: 10 # default 0
 scenarios:
-  - name: "Scenario 1"
-    location: "#elementId1"
+  - name: "Scenario 1" # Default `Scenario 1`
+    initialDelaySeconds: 10 # default 0
+    location: "http://example.com/page1"
+    workers: 10 # Default 1
+    iterations: 1 # Default Infinity
     steps:
       - click: "#elementId1"
-      - navigate: "http://example.com/page1"
       - waitSeconds: 3
       - input:
           selector: ".inputField"

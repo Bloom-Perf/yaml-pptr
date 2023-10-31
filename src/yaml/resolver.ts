@@ -1,6 +1,6 @@
 // Yaml model to Core model
 
-import { ActionType, Scenario, ScenarioMode } from "../core/model";
+import { ActionType, Scenario } from "../core/model";
 import { RootYaml } from "./validator";
 
 type ScenarioYaml =  RootYaml["scenarios"][0];
@@ -10,6 +10,7 @@ type EnvVarResolve = (string) => string;
 type StepYaml = NonNullable<ScenarioYaml["steps"]>[0];
 
 export class Resolver {
+
     constructor(private envVarResolve: EnvVarResolve) {
         this.envVarResolve = (envVarWithDollar: string) => envVarResolve(envVarWithDollar.substring(1));
     }
@@ -25,7 +26,8 @@ export class Resolver {
     private scenario(scenario: ScenarioYaml): Scenario {
         return {
             name: scenario.name,
-            mode: {oneshot: scenario.workers || 1},
+            workers: scenario.workers || 1,
+            iterations: scenario.iterations || Number.POSITIVE_INFINITY,
             actions: [
                 // location field in api generates the first navigate action
                 ...("location" in scenario 

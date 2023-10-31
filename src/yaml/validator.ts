@@ -12,6 +12,7 @@ const stepZod = navigateStepZod;
 const scenarioZod = z.object({
     name: z.string(),
     workers: z.number().min(0, "Number of workers must be positive").optional(),
+    iterations: z.number().min(0, "Number of iterations must be positive").optional(),
     location: urlOrEnv.optional(),
     steps: stepZod.array().optional()
 });

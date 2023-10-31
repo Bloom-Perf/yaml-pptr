@@ -14,9 +14,15 @@ describe("Integration tests", () => {
                     console.log(`-> goto ${str}`)
                     g[str] = (g[str] || 0) + 1;
                     return Promise.resolve();
+                },
+                async close() {
+                    console.log(`-> close`)
+                    return Promise.resolve();
                 }
             });
-        }
+            
+        },
+        
     } as any);
 
     it("basic test", async () => {
@@ -28,13 +34,16 @@ describe("Integration tests", () => {
         const test = readYamlAndInterpret(`
 scenarios:
     - name: Scenario 1
+      iterations: 1
       steps:
         - navigate: "http://example.com/page1"
         - navigate: $TEST
     - name: Scenario 2
       workers: 5
+      iterations: 1
       location: $LOC
     - name: Scenario 3
+      iterations: 1
       steps: []`);
 
         await test(mockedBrowser);

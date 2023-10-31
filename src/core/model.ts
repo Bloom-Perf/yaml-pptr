@@ -9,14 +9,10 @@ export type NavigateAction = {
 
 export type Action = NavigateAction;
 
-export type ScenarioMode = {
-    oneshot: number} | {
-    repeat: number
-}
-
 export type Scenario = {
     name: string,
-    mode: ScenarioMode,
+    workers: number,
+    iterations: number,
     actions: Action[]
 }
 

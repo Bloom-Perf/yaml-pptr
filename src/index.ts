@@ -18,7 +18,7 @@ export const readYamlAndInterpret = (yaml: string) => {
     return async (b: p.Browser) => {
         return Promise.all(root.scenarios.map(async scenario => {
             const page = await b.newPage();
-            await evalScenario(page, scenario);
+            await evalScenario(b, scenario);
         }))
     };
 }
