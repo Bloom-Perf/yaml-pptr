@@ -6,7 +6,7 @@ export const evalScenario = async (browser: p.Browser, scenario: Scenario): Prom
     return await evalSafely(scenario.workers, scenario.name, async index => {
         for (let i = 0; i < scenario.iterations; i++) {
             const page = await browser.newPage();
-            await evalScenarioOnce(scenario.name + ` (${index})`, scenario.actions, page);
+            await evalScenarioOnce(scenario.name + ` (${index})`, scenario.actions, page, index);
             await page.close();
         }
     });
@@ -27,15 +27,18 @@ const evalSafely = async <T>(nb: number, scenarioName: string, createElement: (i
         )
     );
 
-const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p.Page) => {
+const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p.Page, workerIndex: number) => {
 
-    for(const action of actions) {
+    for (const action of actions) {
         switch (action.actionType) {
             case ActionType.Navigate:
-                await page.goto(action.url);
+                if ("url" in action.location)
+                    await page.goto(action.location.url);
+                else
+                    await page.goto(action.location.workerIndex[workerIndex])
                 break;
             default:
-                throw new Error(`Unhandled action type "${action.actionType}" while evaluating scenario "${scenarioName}"`)
+                throw new Error(`Unhandled action type "${action.actionType}" while evaluating scenario "${scenarioName}" on worker ${workerIndex}`)
         }
     }
 }

@@ -16,12 +16,14 @@ scenarios:
     steps:
       - click: "#elementId1"
       - waitSeconds: 3
+      - waitForever: {}
       - input:
           selector: ".inputField"
           text: "Hello, World!"
       - scrollDown: 500
       - scrollUp: 200
   - name: "Scenario 2"
+    location: $LOC[workerIndex]
     steps:
       - hover: "#hoverElement"
       - assertText:

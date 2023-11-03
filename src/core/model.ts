@@ -4,10 +4,12 @@ export enum ActionType {
 
 export type NavigateAction = {
     actionType: ActionType.Navigate,
-    url: string
+    location: UrlOrArray
 }
 
 export type Action = NavigateAction;
+
+export type UrlOrArray = { url: string } | { workerIndex: string[] };
 
 export type Scenario = {
     name: string,

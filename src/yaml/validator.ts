@@ -1,7 +1,8 @@
 
 import * as z from "zod";
 
-const urlOrEnv = z.string().url().or(z.string().startsWith("$"))
+const urlOrEnv = z.string().url()
+    .or(z.string().startsWith("$"))
 
 const navigateStepZod = z.object({
     navigate: urlOrEnv
@@ -13,7 +14,7 @@ const scenarioZod = z.object({
     name: z.string(),
     workers: z.number().min(0, "Number of workers must be positive").optional(),
     iterations: z.number().min(0, "Number of iterations must be positive").optional(),
-    location: urlOrEnv.optional(),
+    location: urlOrEnv,
     steps: stepZod.array().optional()
 });
 

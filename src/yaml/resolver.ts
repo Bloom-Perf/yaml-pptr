@@ -1,9 +1,9 @@
 // Yaml model to Core model
 
-import { ActionType, Scenario } from "../core/model";
+import { ActionType, Scenario, UrlOrArray } from "../core/model";
 import { RootYaml } from "./validator";
 
-type ScenarioYaml =  RootYaml["scenarios"][0];
+type ScenarioYaml = RootYaml["scenarios"][0];
 
 type EnvVarResolve = (string) => string;
 
@@ -19,7 +19,7 @@ export class Resolver {
     private step(step: StepYaml) {
         return {
             actionType: ActionType.Navigate,
-            url: this.resolveUrlOrEnv(step.navigate)
+            location: this.resolveUrlOrEnv(step.navigate)
         }
     }
 
@@ -29,22 +29,28 @@ export class Resolver {
             workers: scenario.workers || 1,
             iterations: scenario.iterations || Number.POSITIVE_INFINITY,
             actions: [
-                // location field in api generates the first navigate action
-                ...("location" in scenario 
-                    ? [{
-                        actionType: ActionType.Navigate,
-                        url: this.resolveUrlOrEnv(scenario.location!)
-                    }]
-                    : []),
-                ...(scenario.steps || []).map(s => this.step(s))
-            ]
-        }   
+                {
+                    actionType: ActionType.Navigate,
+                    location: this.resolveUrlOrEnv(scenario.location)
+                }, ...(scenario.steps || []).map(s => this.step(s))]
+        }
     }
 
-    private resolveUrlOrEnv(urlOrEnv: string) {
-        return urlOrEnv.startsWith("$")
-            ? this.envVarResolve(urlOrEnv)
-            : urlOrEnv;
+    private resolveUrlOrEnv(urlOrEnv: string): UrlOrArray {
+
+        const suffix = "[workerIndex]";
+
+        if (urlOrEnv.startsWith("$")) {
+            if (urlOrEnv.endsWith(suffix)) {
+                const envVarWithoutSuffix = urlOrEnv.substring(0, urlOrEnv.length - suffix.length);
+                const allUrls = this.envVarResolve(envVarWithoutSuffix).split(",").map(t => t.trim())
+                return {
+                    workerIndex: allUrls
+                }
+            }
+            return { url: this.envVarResolve(urlOrEnv) };
+        }
+        return { url: urlOrEnv };
     }
 
     public resolve(yaml: RootYaml) {
