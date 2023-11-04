@@ -75,4 +75,17 @@ scenarios:
         expect(mockedBrowser.gotos()["http://noop.com"]).to.be.equal(1);
 
     });
+
+    xit("wait forever", async () => {
+        const mockedBrowser = createMockedBrowser();
+
+        const test = readYamlAndInterpret(`
+scenarios:
+    - iterations: 1
+      location: "http://example.com/page1"
+      steps:
+        - waitForever`);
+
+        await test(mockedBrowser);
+    });
 });

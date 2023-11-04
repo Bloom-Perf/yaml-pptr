@@ -41,23 +41,19 @@ describe("Yaml Resolver", () => {
 
         expect(core.scenarios).to.be.instanceOf(Array).and.lengthOf(4);
         expect(core.scenarios[0].name).to.be.equal("#1");
-        expect(core.scenarios[0].actions![0].actionType).to.be.equal(ActionType.Navigate);
-        expect(core.scenarios[0].actions![0].location).to.be.deep.equal({ url: "TEST_VALUE" });
+        expect(core.scenarios[0].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "TEST_VALUE" } });
         expect(core.scenarios[0].workers).to.be.equal(1);
 
         expect(core.scenarios[1].name).to.be.equal("#2");
-        expect(core.scenarios[1].actions![0].actionType).to.be.equal(ActionType.Navigate);
-        expect(core.scenarios[1].actions![0].location).to.be.deep.equal({ url: "http://test.com" });
+        expect(core.scenarios[1].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
         expect(core.scenarios[1].workers).to.be.equal(1);
 
         expect(core.scenarios[2].name).to.be.equal("#3");
-        expect(core.scenarios[2].actions![0].actionType).to.be.equal(ActionType.Navigate);
-        expect(core.scenarios[2].actions![0].location).to.be.deep.equal({ url: "http://test.com" });
+        expect(core.scenarios[2].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
         expect(core.scenarios[2].workers).to.be.equal(5);
 
         expect(core.scenarios[3].name).to.be.equal("#4");
-        expect(core.scenarios[3].actions![0].actionType).to.be.equal(ActionType.Navigate);
-        expect(core.scenarios[3].actions![0].location).to.be.deep.equal({ workerIndex: ["http://test1.com", "http://test2.com", "http://test3.com"] });
+        expect(core.scenarios[3].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { workerIndex: ["http://test1.com", "http://test2.com", "http://test3.com"] } });
         expect(core.scenarios[3].workers).to.be.equal(10);
 
     });
@@ -90,20 +86,18 @@ describe("Yaml Resolver", () => {
         expect(core.scenarios).to.be.instanceOf(Array).and.lengthOf(3);
 
         expect(core.scenarios[0].name).to.be.equal("#1");
-        expect(core.scenarios[0].actions![0].actionType).to.be.equal(ActionType.Navigate);
-        expect(core.scenarios[0].actions![0].location).to.be.deep.equal({ url: "http://test.com" });
+        expect(core.scenarios[0].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
         expect(core.scenarios[0].workers).to.be.equal(1);
         expect(core.scenarios[0].run).to.be.deep.equal({ initialDelaySeconds: 0 });
 
         expect(core.scenarios[1].name).to.be.equal("#2");
-        expect(core.scenarios[1].actions![0].actionType).to.be.equal(ActionType.Navigate);
-        expect(core.scenarios[1].actions![0].location).to.be.deep.equal({ url: "http://test.com" });
+        expect(core.scenarios[1].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
         expect(core.scenarios[1].workers).to.be.equal(1);
         expect(core.scenarios[1].run).to.be.deep.equal({ initialDelaySeconds: 10 });
 
         expect(core.scenarios[2].name).to.be.equal("#3");
         expect(core.scenarios[2].actions![0].actionType).to.be.equal(ActionType.Navigate);
-        expect(core.scenarios[2].actions![0].location).to.be.deep.equal({ url: "http://test.com" });
+        expect(core.scenarios[2].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
         expect(core.scenarios[2].workers).to.be.equal(1);
         expect(core.scenarios[2].run).to.be.deep.equal({ delaySecondsBetweenWorkerInits: 10 });
 
@@ -128,14 +122,12 @@ describe("Yaml Resolver", () => {
         expect(core.scenarios).to.be.instanceOf(Array).and.lengthOf(2);
 
         expect(core.scenarios[0].name).to.be.equal("Scenario 1");
-        expect(core.scenarios[0].actions![0].actionType).to.be.equal(ActionType.Navigate);
-        expect(core.scenarios[0].actions![0].location).to.be.deep.equal({ url: "http://test.com" });
+        expect(core.scenarios[0].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
         expect(core.scenarios[0].workers).to.be.equal(1);
         expect(core.scenarios[0].run).to.be.deep.equal({ initialDelaySeconds: 0 });
 
         expect(core.scenarios[1].name).to.be.equal("Scenario 2");
-        expect(core.scenarios[1].actions![0].actionType).to.be.equal(ActionType.Navigate);
-        expect(core.scenarios[1].actions![0].location).to.be.deep.equal({ url: "http://test2.com" });
+        expect(core.scenarios[1].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test2.com" } });
         expect(core.scenarios[1].workers).to.be.equal(1);
         expect(core.scenarios[1].run).to.be.deep.equal({ initialDelaySeconds: 0 });
 

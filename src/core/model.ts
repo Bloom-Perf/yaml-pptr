@@ -1,5 +1,6 @@
 export enum ActionType {
     Navigate = 0,
+    WaitForever = 1
 };
 
 export type NavigateAction = {
@@ -7,7 +8,11 @@ export type NavigateAction = {
     location: UrlOrArray
 }
 
-export type Action = NavigateAction;
+export type WaitForeverAction = {
+    actionType: ActionType.WaitForever
+}
+
+export type Action = NavigateAction | WaitForeverAction;
 
 export type Run = {
     initialDelaySeconds: number

@@ -1,6 +1,6 @@
 // Yaml model to Core model
 
-import { ActionType, Run, Scenario, UrlOrArray } from "../core/model";
+import { Action, ActionType, Run, Scenario, UrlOrArray } from "../core/model";
 import { RootYaml } from "./validator";
 
 type ScenarioYaml = RootYaml["scenarios"][0];
@@ -16,7 +16,12 @@ export class Resolver {
     }
 
 
-    private step(step: StepYaml) {
+    private step(step: StepYaml): Action {
+        if (step === "waitForever") {
+            return {
+                actionType: ActionType.WaitForever
+            };
+        }
         return {
             actionType: ActionType.Navigate,
             location: this.resolveUrlOrEnv(step.navigate)

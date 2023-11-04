@@ -27,7 +27,7 @@ scenarios:
     expect(test.scenarios).to.be.instanceOf(Array).and.lengthOf(5);
     expect(test.scenarios[0].name).to.be.equal("Scenario 1");
     expect(test.scenarios[0].location).to.be.equal("http://example.com/page1");
-    expect(test.scenarios[0].steps![0].navigate).to.be.equal("$TEST");
+    expect(test.scenarios[0].steps![0]).to.be.deep.equal({ navigate: "$TEST" });
     expect(test.scenarios[0].workers).to.be.undefined;
     expect(test.scenarios[0].initialDelaySeconds).to.be.undefined;
     expect(test.scenarios[0].run).to.be.undefined;
@@ -58,6 +58,25 @@ scenarios:
     expect(test.scenarios[4].location).to.be.equal("$LOC[workerIndex]");
     expect(test.scenarios[4].run).to.be.undefined;
     expect(test.scenarios[4].initialDelaySeconds).to.be.undefined;
+
+  });
+
+  it("parses waitForever", () => {
+
+    const test = parseYaml(`
+scenarios:
+    - name: Scenario 1
+      location: "http://example.com/page1"
+      steps:
+        - waitForever`);
+
+    expect(test.scenarios).to.be.instanceOf(Array).and.lengthOf(1);
+    expect(test.scenarios[0].name).to.be.equal("Scenario 1");
+    expect(test.scenarios[0].location).to.be.equal("http://example.com/page1");
+    expect(test.scenarios[0].steps![0]).to.be.deep.equal("waitForever");
+    expect(test.scenarios[0].workers).to.be.undefined;
+    expect(test.scenarios[0].initialDelaySeconds).to.be.undefined;
+    expect(test.scenarios[0].run).to.be.undefined;
 
   });
 });

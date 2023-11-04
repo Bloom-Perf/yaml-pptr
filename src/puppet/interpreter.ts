@@ -29,7 +29,7 @@ const evalSafely = async <T>(nb: number, scenarioName: string, createElement: (i
                 try {
                     await createElement(elementIndex);
                 } catch (e) {
-                    console.error(`Scenario ${scenarioName} (${elementIndex}) failed: ${e}`)
+                    console.error(`Scenario ${scenarioName} (worker ${elementIndex}) failed: ${e}`)
                 }
             }
         )
@@ -38,6 +38,7 @@ const evalSafely = async <T>(nb: number, scenarioName: string, createElement: (i
 const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p.Page, workerIndex: number) => {
 
     for (const action of actions) {
+        const { actionType } = action;
         switch (action.actionType) {
             case ActionType.Navigate:
                 if ("url" in action.location)
@@ -45,8 +46,13 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
                 else
                     await page.goto(action.location.workerIndex[workerIndex])
                 break;
+            case ActionType.WaitForever:
+                while (true) {
+                    await new Promise(r => setTimeout(r, 3600 * 1000));
+                }
+                break;
             default:
-                throw new Error(`Unhandled action type "${action.actionType}" while evaluating scenario "${scenarioName}" on worker ${workerIndex}`)
+                throw new Error(`Unhandled action type "${actionType}" while evaluating scenario "${scenarioName}" on worker ${workerIndex}`)
         }
     }
 }

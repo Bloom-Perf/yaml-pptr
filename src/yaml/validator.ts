@@ -8,7 +8,9 @@ const navigateStepZod = z.object({
     navigate: urlOrEnv
 });
 
-const stepZod = navigateStepZod;
+const waitForeverStepZod = z.literal("waitForever");
+
+const stepZod = z.union([navigateStepZod, waitForeverStepZod]);
 
 const scenarioZod = z.object({
     name: z.string().optional(),
