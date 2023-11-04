@@ -9,10 +9,17 @@ export type NavigateAction = {
 
 export type Action = NavigateAction;
 
+export type Run = {
+    initialDelaySeconds: number
+} | {
+    delaySecondsBetweenWorkerInits: number
+};
+
 export type UrlOrArray = { url: string } | { workerIndex: string[] };
 
 export type Scenario = {
     name: string,
+    run: Run,
     workers: number,
     iterations: number,
     actions: Action[]

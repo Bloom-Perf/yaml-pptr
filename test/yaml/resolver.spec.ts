@@ -61,4 +61,51 @@ describe("Yaml Resolver", () => {
         expect(core.scenarios[3].workers).to.be.equal(10);
 
     });
+
+    it("resolves run strategy correctly", () => {
+        const resolver = new Resolver(v => "")
+
+        const yaml: RootYaml = {
+            scenarios: [
+                {
+                    name: "#1",
+                    location: "http://test.com",
+                },
+                {
+                    name: "#2",
+                    location: "http://test.com",
+                    initialDelaySeconds: 10
+                },
+                {
+                    name: "#3",
+                    location: "http://test.com",
+                    run: "SEQUENTIAL",
+                    initialDelaySeconds: 10
+                },
+            ]
+        }
+
+        const core = resolver.resolve(yaml);
+
+        expect(core.scenarios).to.be.instanceOf(Array).and.lengthOf(3);
+
+        expect(core.scenarios[0].name).to.be.equal("#1");
+        expect(core.scenarios[0].actions![0].actionType).to.be.equal(ActionType.Navigate);
+        expect(core.scenarios[0].actions![0].location).to.be.deep.equal({ url: "http://test.com" });
+        expect(core.scenarios[0].workers).to.be.equal(1);
+        expect(core.scenarios[0].run).to.be.deep.equal({ initialDelaySeconds: 0 });
+
+        expect(core.scenarios[1].name).to.be.equal("#2");
+        expect(core.scenarios[1].actions![0].actionType).to.be.equal(ActionType.Navigate);
+        expect(core.scenarios[1].actions![0].location).to.be.deep.equal({ url: "http://test.com" });
+        expect(core.scenarios[1].workers).to.be.equal(1);
+        expect(core.scenarios[1].run).to.be.deep.equal({ initialDelaySeconds: 10 });
+
+        expect(core.scenarios[2].name).to.be.equal("#3");
+        expect(core.scenarios[2].actions![0].actionType).to.be.equal(ActionType.Navigate);
+        expect(core.scenarios[2].actions![0].location).to.be.deep.equal({ url: "http://test.com" });
+        expect(core.scenarios[2].workers).to.be.equal(1);
+        expect(core.scenarios[2].run).to.be.deep.equal({ delaySecondsBetweenWorkerInits: 10 });
+
+    });
 });

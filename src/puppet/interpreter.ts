@@ -5,6 +5,14 @@ export const evalScenario = async (browser: p.Browser, scenario: Scenario): Prom
 
     return await evalSafely(scenario.workers, scenario.name, async index => {
         for (let i = 0; i < scenario.iterations; i++) {
+
+            const run = scenario.run;
+            if ("delaySecondsBetweenWorkerInits" in run) {
+                await new Promise(r => setTimeout(r, run.delaySecondsBetweenWorkerInits * index * 1000));
+            } else {
+                await new Promise(r => setTimeout(r, run.initialDelaySeconds * 1000));
+            }
+
             const page = await browser.newPage();
             await evalScenarioOnce(scenario.name + ` (${index})`, scenario.actions, page, index);
             await page.close();

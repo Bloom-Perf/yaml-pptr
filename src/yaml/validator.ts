@@ -12,6 +12,8 @@ const stepZod = navigateStepZod;
 
 const scenarioZod = z.object({
     name: z.string(),
+    run: z.enum(["PARALLEL", "SEQUENTIAL"]).optional(),
+    initialDelaySeconds: z.number().min(0, "A delay must be positive").optional(),
     workers: z.number().min(0, "Number of workers must be positive").optional(),
     iterations: z.number().min(0, "Number of iterations must be positive").optional(),
     location: urlOrEnv,

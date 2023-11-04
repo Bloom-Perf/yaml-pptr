@@ -1,6 +1,6 @@
 // Yaml model to Core model
 
-import { ActionType, Scenario, UrlOrArray } from "../core/model";
+import { ActionType, Run, Scenario, UrlOrArray } from "../core/model";
 import { RootYaml } from "./validator";
 
 type ScenarioYaml = RootYaml["scenarios"][0];
@@ -26,6 +26,11 @@ export class Resolver {
     private scenario(scenario: ScenarioYaml): Scenario {
         return {
             name: scenario.name,
+            run: scenario.run == "SEQUENTIAL" ? {
+                delaySecondsBetweenWorkerInits: scenario.initialDelaySeconds || 0
+            } : {
+                initialDelaySeconds: scenario.initialDelaySeconds || 0
+            },
             workers: scenario.workers || 1,
             iterations: scenario.iterations || Number.POSITIVE_INFINITY,
             actions: [
