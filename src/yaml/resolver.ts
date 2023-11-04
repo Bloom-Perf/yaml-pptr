@@ -23,9 +23,9 @@ export class Resolver {
         }
     }
 
-    private scenario(scenario: ScenarioYaml): Scenario {
+    private scenario(scenario: ScenarioYaml, n: number): Scenario {
         return {
-            name: scenario.name,
+            name: scenario.name || `Scenario ${n}`,
             run: scenario.run == "SEQUENTIAL" ? {
                 delaySecondsBetweenWorkerInits: scenario.initialDelaySeconds || 0
             } : {
@@ -60,7 +60,7 @@ export class Resolver {
 
     public resolve(yaml: RootYaml) {
         return {
-            scenarios: yaml.scenarios.map(s => this.scenario(s))
+            scenarios: yaml.scenarios.map((s, i) => this.scenario(s, i + 1))
         }
     };
 

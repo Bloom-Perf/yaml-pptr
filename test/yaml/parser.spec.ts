@@ -21,9 +21,10 @@ scenarios:
     - name: Scenario 4
       initialDelaySeconds: 10
       run: SEQUENTIAL
-      location: $LOC[workerIndex]`);
+      location: $LOC[workerIndex]
+    - location: $LOC[workerIndex]`);
 
-    expect(test.scenarios).to.be.instanceOf(Array).and.lengthOf(4);
+    expect(test.scenarios).to.be.instanceOf(Array).and.lengthOf(5);
     expect(test.scenarios[0].name).to.be.equal("Scenario 1");
     expect(test.scenarios[0].location).to.be.equal("http://example.com/page1");
     expect(test.scenarios[0].steps![0].navigate).to.be.equal("$TEST");
@@ -50,6 +51,13 @@ scenarios:
     expect(test.scenarios[3].location).to.be.equal("$LOC[workerIndex]");
     expect(test.scenarios[3].run).to.be.equal("SEQUENTIAL");
     expect(test.scenarios[3].initialDelaySeconds).to.be.equal(10);
+
+    expect(test.scenarios[4].name).to.be.undefined;
+    expect(test.scenarios[4].workers).to.be.undefined;
+    expect(test.scenarios[4].steps).to.be.undefined;
+    expect(test.scenarios[4].location).to.be.equal("$LOC[workerIndex]");
+    expect(test.scenarios[4].run).to.be.undefined;
+    expect(test.scenarios[4].initialDelaySeconds).to.be.undefined;
 
   });
 });

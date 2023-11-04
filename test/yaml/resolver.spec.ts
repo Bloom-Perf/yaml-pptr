@@ -108,4 +108,37 @@ describe("Yaml Resolver", () => {
         expect(core.scenarios[2].run).to.be.deep.equal({ delaySecondsBetweenWorkerInits: 10 });
 
     });
+
+    it("resolves defaults", () => {
+        const resolver = new Resolver(v => "")
+
+        const yaml: RootYaml = {
+            scenarios: [
+                {
+                    location: "http://test.com",
+                },
+                {
+                    location: "http://test2.com",
+                },
+            ]
+        }
+
+        const core = resolver.resolve(yaml);
+
+        expect(core.scenarios).to.be.instanceOf(Array).and.lengthOf(2);
+
+        expect(core.scenarios[0].name).to.be.equal("Scenario 1");
+        expect(core.scenarios[0].actions![0].actionType).to.be.equal(ActionType.Navigate);
+        expect(core.scenarios[0].actions![0].location).to.be.deep.equal({ url: "http://test.com" });
+        expect(core.scenarios[0].workers).to.be.equal(1);
+        expect(core.scenarios[0].run).to.be.deep.equal({ initialDelaySeconds: 0 });
+
+        expect(core.scenarios[1].name).to.be.equal("Scenario 2");
+        expect(core.scenarios[1].actions![0].actionType).to.be.equal(ActionType.Navigate);
+        expect(core.scenarios[1].actions![0].location).to.be.deep.equal({ url: "http://test2.com" });
+        expect(core.scenarios[1].workers).to.be.equal(1);
+        expect(core.scenarios[1].run).to.be.deep.equal({ initialDelaySeconds: 0 });
+
+
+    });
 });
