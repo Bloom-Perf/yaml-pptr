@@ -5,7 +5,7 @@ import { RootYaml } from "./validator";
 
 type ScenarioYaml = RootYaml["scenarios"][0];
 
-type EnvVarResolve = (string) => string;
+type EnvVarResolve = (arg: string) => string;
 
 type StepYaml = NonNullable<ScenarioYaml["steps"]>[0];
 

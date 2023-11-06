@@ -3,7 +3,7 @@ import { readYamlAndInterpret } from "../src";
 
 describe("Integration tests", () => {
 
-    const createMockedBrowser = (g = {}) => ({
+    const createMockedBrowser = (g: { [k: string]: number } = {}) => ({
         gotos() {
             return g;
         },
