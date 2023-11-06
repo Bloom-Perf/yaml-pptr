@@ -30,7 +30,7 @@
     "zod": "3.22.4"
   },
   "scripts": {
-    "build": "rm -rf dist && node esbuild.js",
+    "build": "rm -rf dist && node esbuild.js && tsc",
     "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register test/**/*.spec.ts",
     "test:coverage": "nyc npm run test"
   },
