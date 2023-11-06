@@ -1,7 +1,6 @@
 {
   "include": [
-    "src",
-    "test"
+    "src/**/*"
   ],
   "compilerOptions": {
     "module": "esnext",
@@ -18,6 +17,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "emitDeclarationOnly": true,
+    "strictNullChecks": true,
     "outDir": "dist"
   }
 }
