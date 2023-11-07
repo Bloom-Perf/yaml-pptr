@@ -6,7 +6,7 @@ import { Resolver } from "./yaml/resolver";
 export const readYamlAndInterpret = (yaml: string) => {
     const rootYaml = parseYaml(yaml);
 
-    const domainResolver = new Resolver((envVarName: string) => { 
+    const domainResolver = new Resolver((envVarName: string) => {
         const envVarValue = process.env[envVarName];
         if (envVarValue) return envVarValue;
 
@@ -15,9 +15,10 @@ export const readYamlAndInterpret = (yaml: string) => {
 
     const root = domainResolver.resolve(rootYaml);
 
-    return async (b: p.Browser) => {
+    return async (b: p.Browser, setupPage: (page: p.Page) => Promise<void> = (_) => Promise.resolve()) => {
         return Promise.all(root.scenarios.map(async scenario => {
             const page = await b.newPage();
+            await setupPage(page);
             await evalScenario(b, scenario);
         }))
     };
