@@ -1,7 +1,7 @@
 // Yaml model to Core model
 
-import { YpLogger } from "../core/logger";
-import { Action, ActionType, Run, Scenario, UrlOrArray } from "../core/model";
+import { YpLogger, dumbLogger } from "../core/logger";
+import { Action, ActionType, Scenario, UrlOrArray } from "../core/model";
 import { RootYaml } from "./validator";
 
 type ScenarioYaml = RootYaml["scenarios"][0];
@@ -12,7 +12,7 @@ type StepYaml = NonNullable<ScenarioYaml["steps"]>[0];
 
 export class Resolver {
 
-    constructor(private envVarResolve: EnvVarResolve, private logger: YpLogger) {
+    constructor(private envVarResolve: EnvVarResolve, private logger: YpLogger = dumbLogger) {
         this.envVarResolve = (envVarWithDollar: string) => envVarResolve(envVarWithDollar.substring(1));
     }
 
