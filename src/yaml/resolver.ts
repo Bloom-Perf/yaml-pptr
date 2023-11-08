@@ -1,5 +1,6 @@
 // Yaml model to Core model
 
+import { YpLogger } from "../core/logger";
 import { Action, ActionType, Run, Scenario, UrlOrArray } from "../core/model";
 import { RootYaml } from "./validator";
 
@@ -11,13 +12,14 @@ type StepYaml = NonNullable<ScenarioYaml["steps"]>[0];
 
 export class Resolver {
 
-    constructor(private envVarResolve: EnvVarResolve) {
+    constructor(private envVarResolve: EnvVarResolve, private logger: YpLogger) {
         this.envVarResolve = (envVarWithDollar: string) => envVarResolve(envVarWithDollar.substring(1));
     }
 
 
     private step(step: StepYaml): Action {
         if (step === "waitForever") {
+            this.logger.debug(`Resolving yaml step waitForever`);
             return {
                 actionType: ActionType.WaitForever
             };
@@ -29,6 +31,7 @@ export class Resolver {
     }
 
     private scenario(scenario: ScenarioYaml, n: number): Scenario {
+        this.logger.debug(`Resolving yaml scenario ${JSON.stringify(scenario)}`);
         return {
             name: scenario.name || `Scenario ${n}`,
             run: scenario.run == "SEQUENTIAL" ? {
@@ -52,14 +55,17 @@ export class Resolver {
 
         if (urlOrEnv.startsWith("$")) {
             if (urlOrEnv.endsWith(suffix)) {
+                this.logger.debug(`Resolving indexed environment variable "${urlOrEnv}"`);
                 const envVarWithoutSuffix = urlOrEnv.substring(0, urlOrEnv.length - suffix.length);
                 const allUrls = this.envVarResolve(envVarWithoutSuffix).split(",").map(t => t.trim())
                 return {
                     workerIndex: allUrls
                 }
             }
+            this.logger.debug(`Resolving plain environment variable: "${urlOrEnv}"`);
             return { url: this.envVarResolve(urlOrEnv) };
         }
+        this.logger.debug(`Resolving simple url: ${urlOrEnv}`);
         return { url: urlOrEnv };
     }
 
