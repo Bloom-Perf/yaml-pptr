@@ -9,7 +9,7 @@
   ],
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
-    "@types/js-yaml": "4.0.8",
+    "@types/js-yaml": "4.0.9",
     "@types/mocha": "10.0.4",
     "@types/chai": "4.3.10",
     "esbuild": "0.19.5",
