@@ -24,6 +24,15 @@ export class Resolver {
                 actionType: ActionType.WaitForever
             };
         }
+
+        if ("wait" in step) {
+            this.logger.debug(`Resolving yaml step wait with ${step.wait} seconds`);
+            return {
+                actionType: ActionType.Wait,
+                milliseconds: step.wait * 1000
+            };
+        }
+
         return {
             actionType: ActionType.Navigate,
             location: this.resolveUrlOrEnv(step.navigate)

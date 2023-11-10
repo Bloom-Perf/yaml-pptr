@@ -10,7 +10,9 @@ const navigateStepZod = z.object({
 
 const waitForeverStepZod = z.literal("waitForever");
 
-const stepZod = z.union([navigateStepZod, waitForeverStepZod]);
+const waitSecondsStepZod = z.object({ wait: z.number() });
+
+const stepZod = z.union([navigateStepZod, waitForeverStepZod, waitSecondsStepZod]);
 
 const scenarioZod = z.object({
     name: z.string().optional(),

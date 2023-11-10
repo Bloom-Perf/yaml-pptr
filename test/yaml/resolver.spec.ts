@@ -103,6 +103,36 @@ describe("Yaml Resolver", () => {
 
     });
 
+    it("resolves wait action", () => {
+        const resolver = new Resolver(v => "")
+
+        const yaml: RootYaml = {
+            scenarios: [
+                {
+                    location: "http://test.com",
+                    steps: [
+                        {
+                            wait: 5
+                        }
+                    ]
+                }
+            ]
+        }
+
+        const core = resolver.resolve(yaml);
+
+
+        expect(core.scenarios[0].actions[0]).to.be.deep.equal({
+            actionType: ActionType.Navigate,
+            location: { url: "http://test.com" }
+        });
+
+        expect(core.scenarios[0].actions[1]).to.be.deep.equal({
+            actionType: ActionType.Wait,
+            milliseconds: 5000
+        });
+    });
+
     it("resolves defaults", () => {
         const resolver = new Resolver(v => "")
 

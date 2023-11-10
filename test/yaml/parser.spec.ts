@@ -61,19 +61,35 @@ scenarios:
 
   });
 
-  it("parses waitForever", () => {
+  it("parses waitForever step", () => {
 
     const test = parseYaml(`
 scenarios:
-    - name: Scenario 1
-      location: "http://example.com/page1"
+    - location: "http://example.com/page1"
       steps:
         - waitForever`);
 
     expect(test.scenarios).to.be.instanceOf(Array).and.lengthOf(1);
-    expect(test.scenarios[0].name).to.be.equal("Scenario 1");
+    expect(test.scenarios[0].name).to.be.undefined;
     expect(test.scenarios[0].location).to.be.equal("http://example.com/page1");
     expect(test.scenarios[0].steps![0]).to.be.deep.equal("waitForever");
+    expect(test.scenarios[0].workers).to.be.undefined;
+    expect(test.scenarios[0].initialDelaySeconds).to.be.undefined;
+    expect(test.scenarios[0].run).to.be.undefined;
+
+  });
+
+  it("parses wait step", () => {
+
+    const test = parseYaml(`
+scenarios:
+    - location: "http://example.com/page1"
+      steps:
+        - wait: 3`);
+
+    expect(test.scenarios).to.be.instanceOf(Array).and.lengthOf(1);
+    expect(test.scenarios[0].location).to.be.equal("http://example.com/page1");
+    expect(test.scenarios[0].steps![0]).to.be.deep.equal({ wait: 3 });
     expect(test.scenarios[0].workers).to.be.undefined;
     expect(test.scenarios[0].initialDelaySeconds).to.be.undefined;
     expect(test.scenarios[0].run).to.be.undefined;

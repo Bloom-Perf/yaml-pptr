@@ -88,4 +88,17 @@ scenarios:
 
         await test(mockedBrowser);
     });
+
+    it("wait 1s", async () => {
+        const mockedBrowser = createMockedBrowser();
+
+        const test = readYamlAndInterpret(`
+scenarios:
+    - iterations: 1
+      location: "http://example.com/page1"
+      steps:
+        - wait: 1`);
+
+        await test(mockedBrowser);
+    });
 });

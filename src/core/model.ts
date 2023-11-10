@@ -1,6 +1,7 @@
 export enum ActionType {
     Navigate = 0,
-    WaitForever = 1
+    WaitForever = 1,
+    Wait = 2,
 };
 
 export type NavigateAction = {
@@ -10,9 +11,14 @@ export type NavigateAction = {
 
 export type WaitForeverAction = {
     actionType: ActionType.WaitForever
+};
+
+export type WaitAction = {
+    actionType: ActionType.Wait,
+    milliseconds: number
 }
 
-export type Action = NavigateAction | WaitForeverAction;
+export type Action = NavigateAction | WaitForeverAction | WaitAction;
 
 export type Run = {
     initialDelaySeconds: number

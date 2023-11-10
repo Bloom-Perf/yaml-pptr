@@ -53,6 +53,10 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
                     await page.goto(action.location.workerIndex[workerIndex])
                 }
                 break;
+            case ActionType.Wait:
+                logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > Waiting ${action.milliseconds} milliseconds...`)
+                await new Promise(r => setTimeout(r, action.milliseconds));
+                break;
             case ActionType.WaitForever:
                 logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > Waiting forever...`)
                 while (true) {
