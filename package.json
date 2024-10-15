@@ -31,7 +31,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && node esbuild.js && tsc",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register test/**/*.spec.ts",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules mocha --loader ts-node/esm \"test/**/*.spec.ts\"",
     "test:coverage": "nyc npm run test"
   },
   "publishConfig": {
