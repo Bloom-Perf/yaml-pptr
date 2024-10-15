@@ -2,6 +2,7 @@
   "name": "@bloom-perf/yaml-pptr",
   "version": "0.0.7",
   "description": "A library to generate puppeteer browser controls through a YAML api.",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -31,7 +32,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && node esbuild.js && tsc",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register test/**/*.spec.ts",
+    "test": "mocha --loader ts-node/esm -r ts-node/register test/**/*.spec.ts",
     "test:coverage": "nyc npm run test"
   },
   "publishConfig": {

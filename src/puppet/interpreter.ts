@@ -93,6 +93,12 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
                 };
                 await page.goto(gotoAction.url, gotoOptions);
                 break;
+            case ActionType.WaitForever:
+                logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > Waiting forever...`)
+                while (true) {
+                    await new Promise(r => setTimeout(r, 3600 * 1000));
+                }
+                break;
             case ActionType.Click:
                 const clickAction = action as ClickAction;
                 logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > CLICK on "${clickAction.selector}"`);

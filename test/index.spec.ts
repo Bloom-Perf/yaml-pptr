@@ -92,16 +92,16 @@ scenarios:
     });
 
     // Vous pouvez réactiver ou adapter le test "wait forever" si nécessaire
-    // it("wait forever", async () => {
-    //     const mockedBrowser = createMockedBrowser();
+    it("wait forever", async () => {
+        const mockedBrowser = createMockedBrowser();
 
-    //     const yamlContent = `
-    // scenarios:
-    //     - iterations: 1
-    //       location: "http://example.com/page1"
-    //       steps:
-    //         - waitForever`;
+        const yamlContent = `
+    scenarios:
+        - iterations: 1
+          location: "http://example.com/page1"
+          steps:
+            - waitForever`;
 
-    //     await readYamlAndInterpret(yamlContent, { chrome: mockedBrowser });
-    // });
+        await readYamlAndInterpret(yamlContent, { chrome: mockedBrowser });
+    });
 });
