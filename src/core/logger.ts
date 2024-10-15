@@ -1,4 +1,3 @@
-
 export type YpLogger = {
     debug(str: string): void,
     info(str: string): void,

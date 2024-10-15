@@ -1,7 +1,7 @@
-import * as yaml from "js-yaml";
-import { rootZod } from "./validator";
+import * as yaml from 'js-yaml';
+import { rootZod, RootYaml } from './validator';
 
-export const parseYaml = (str: string) => {
-    const yamlStructure = yaml.load(str);
+export const parseYaml = (yamlContent: string): RootYaml => {
+    const yamlStructure = yaml.load(yamlContent);
     return rootZod.parse(yamlStructure);
-}
+};
