@@ -1,42 +1,51 @@
-import * as fs from 'fs';
+// src/index.ts
 import * as p from 'puppeteer';
 import { SupportedBrowser } from './core/model';
 import { parseYaml } from './yaml/parser';
 import { Resolver } from './yaml/resolver';
 import { evalScenario } from './puppet/interpreter';
-import { dumbLogger } from './core/logger';
+import { YpLogger, dumbLogger } from './core/logger';
 
-(async () => {
-    const args = process.argv.slice(2);
-    const yamlFile = args[0];
 
-    if (!yamlFile) {
-        console.error('Veuillez spécifier le nom du fichier YAML.');
-        process.exit(1);
+
+export const readYamlAndInterpret = async (
+    yamlContent: string,
+    browsers: { [key in SupportedBrowser]?: p.Browser } = {},
+    logger: YpLogger = dumbLogger
+): Promise<void> => {
+    // Analyse et résolution du YAML
+    const rootYaml = parseYaml(yamlContent);
+
+    const domainResolver = new Resolver((envVarName: string) => {
+        const envVarValue = process.env[envVarName];
+
+        logger.debug(`Resolving env variable "${envVarName}" with value ***`);
+        if (envVarValue) return envVarValue;
+
+        throw new Error(`Tried to resolve env variable ${envVarName} but was empty.`);
+    }, logger);
+
+    const root = domainResolver.resolve(rootYaml);
+
+    // Grouper les scénarios par navigateur
+    const scenariosByBrowser: { [key in SupportedBrowser]?: typeof root.scenarios } = {};
+    for (const scenario of root.scenarios) {
+        const browserName = scenario.browser || 'chrome'; // Défaut à chrome
+        if (!scenariosByBrowser[browserName]) {
+            scenariosByBrowser[browserName] = [];
+        }
+        scenariosByBrowser[browserName]?.push(scenario);
     }
 
-    const yamlContent = fs.readFileSync(`./src/scenarios/${yamlFile}`, 'utf8');
-    const yamlRoot = parseYaml(yamlContent);
+    const supportedBrowsers: SupportedBrowser[] = ['chrome', 'firefox'];
 
-    const resolver = new Resolver((envVarName: string) => {
-        const envVarValue = process.env[envVarName];
-        if (envVarValue !== undefined) {
-            return envVarValue;
-        } else {
-            throw new Error(`La variable d'environnement ${envVarName} n'est pas définie`);
-        }
-    }, dumbLogger);
+    // Lancer les navigateurs et exécuter les scénarios
+    const browserPromises = Object.entries(scenariosByBrowser).map(async ([browserName, scenarios]) => {
+        if (!scenarios) return;
 
-    const root = resolver.resolve(yamlRoot);
-
-    for (const scenario of root.scenarios) {
-        const browserName = scenario.browser;
-
-        const supportedBrowsers: SupportedBrowser[] = ['chrome', 'firefox'];
-
-        if (!supportedBrowsers.includes(browserName)) {
+        if (!supportedBrowsers.includes(browserName as SupportedBrowser)) {
             console.error(`Navigateur non supporté: ${browserName}. Les navigateurs supportés sont: ${supportedBrowsers.join(', ')}`);
-            process.exit(1);
+            return;
         }
 
         const browserArgs = [
@@ -56,15 +65,32 @@ import { dumbLogger } from './core/logger';
             browserArgs.push('--private');
         }
 
-        const browser = await p.launch({
-            headless: false,
-            browser: browserName,
-            acceptInsecureCerts: true,
-            args: browserArgs,
-        });
+        let browser = browsers[browserName as SupportedBrowser];
+        let shouldClose = false;
 
-        await evalScenario(browser, scenario, dumbLogger);
+        // Si aucun navigateur n'est fourni pour ce type, en lancer un nouveau
+        if (!browser) {
+            browser = await p.launch({
+                headless: false,
+                channel: browserName as any, // 'chrome' ou 'firefox'
+                acceptInsecureCerts: true,
+                args: browserArgs,
+            });
+            shouldClose = true; // Indiquer que ce navigateur doit être fermé après utilisation
+        }
 
-        await browser.close();
-    }
-})();
+        try {
+            for (const scenario of scenarios) {
+                await evalScenario(browser, scenario, logger);
+            }
+        } catch (error) {
+            console.error(`Erreur lors de l'exécution des scénarios pour ${browserName}:`, error);
+        } finally {
+            if (shouldClose && browser) {
+                await browser.close();
+            }
+        }
+    });
+
+    await Promise.all(browserPromises);
+};
