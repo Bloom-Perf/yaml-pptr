@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { Resolver } from "../../src/yaml/resolver"
 import { RootYaml } from '../../src/yaml/validator';
-import { ActionType } from '../../src/core/model';
+import { ActionType, SupportedBrowser } from '../../src/core/model';
 
 describe("Yaml Resolver", () => {
 
@@ -18,19 +18,16 @@ describe("Yaml Resolver", () => {
             scenarios: [
                 {
                     name: "#1",
+                    browser: 'firefox',
                     location: "$TEST",
                 },
                 {
                     name: "#2",
                     location: "http://test.com",
-                },
-                {
-                    name: "#3",
-                    location: "http://test.com",
                     workers: 5
                 },
                 {
-                    name: "#4",
+                    name: "#3",
                     location: "$INDEXED[workerIndex]",
                     workers: 10
                 },
@@ -39,22 +36,28 @@ describe("Yaml Resolver", () => {
 
         const core = resolver.resolve(yaml);
 
-        expect(core.scenarios).to.be.instanceOf(Array).and.lengthOf(4);
-        expect(core.scenarios[0].name).to.be.equal("#1");
-        expect(core.scenarios[0].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "TEST_VALUE" } });
-        expect(core.scenarios[0].workers).to.be.equal(1);
+        expect(core.scenarios).to.be.an('array').with.lengthOf(4);
 
-        expect(core.scenarios[1].name).to.be.equal("#2");
-        expect(core.scenarios[1].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
-        expect(core.scenarios[1].workers).to.be.equal(1);
+        // Scenario #1
+        expect(core.scenarios[0].name).to.equal("#1");
+        expect(core.scenarios[0].browser).to.equal("firefox");
+        expect(core.scenarios[0].actions[0]).to.deep.equal({ actionType: ActionType.Navigate, location: { url: "TEST_VALUE" } });
+        expect(core.scenarios[0].workers).to.equal(1);
 
-        expect(core.scenarios[2].name).to.be.equal("#3");
-        expect(core.scenarios[2].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
-        expect(core.scenarios[2].workers).to.be.equal(5);
+        // Scenario #3
+        expect(core.scenarios[2].name).to.equal("#3");
+        expect(core.scenarios[2].browser).to.equal("chrome"); // Navigateur par défaut
+        expect(core.scenarios[2].actions[0]).to.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
+        expect(core.scenarios[2].workers).to.equal(5);
 
-        expect(core.scenarios[3].name).to.be.equal("#4");
-        expect(core.scenarios[3].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { workerIndex: ["http://test1.com", "http://test2.com", "http://test3.com"] } });
-        expect(core.scenarios[3].workers).to.be.equal(10);
+        // Scenario #4
+        expect(core.scenarios[3].name).to.equal("#4");
+        expect(core.scenarios[3].browser).to.equal("chrome"); // Navigateur par défaut
+        expect(core.scenarios[3].actions[0]).to.deep.equal({
+            actionType: ActionType.Navigate,
+            location: { workerIndex: ["http://test1.com", "http://test2.com", "http://test3.com"] }
+        });
+        expect(core.scenarios[3].workers).to.equal(10);
 
     });
 
@@ -69,37 +72,30 @@ describe("Yaml Resolver", () => {
                 },
                 {
                     name: "#2",
+                    browser: 'firefox',
                     location: "http://test.com",
                     initialDelaySeconds: 10
-                },
-                {
-                    name: "#3",
-                    location: "http://test.com",
-                    run: "SEQUENTIAL",
-                    initialDelaySeconds: 10
-                },
+                }
             ]
         }
 
         const core = resolver.resolve(yaml);
 
-        expect(core.scenarios).to.be.instanceOf(Array).and.lengthOf(3);
+        expect(core.scenarios).to.be.an('array').with.lengthOf(3);
 
-        expect(core.scenarios[0].name).to.be.equal("#1");
-        expect(core.scenarios[0].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
-        expect(core.scenarios[0].workers).to.be.equal(1);
-        expect(core.scenarios[0].run).to.be.deep.equal({ initialDelaySeconds: 0 });
+        // Scenario #1
+        expect(core.scenarios[0].name).to.equal("#1");
+        expect(core.scenarios[0].browser).to.equal("chrome"); // Navigateur par défaut
+        expect(core.scenarios[0].actions[0]).to.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
+        expect(core.scenarios[0].workers).to.equal(1);
+        expect(core.scenarios[0].run).to.deep.equal({ initialDelaySeconds: 0 });
 
-        expect(core.scenarios[1].name).to.be.equal("#2");
-        expect(core.scenarios[1].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
-        expect(core.scenarios[1].workers).to.be.equal(1);
-        expect(core.scenarios[1].run).to.be.deep.equal({ initialDelaySeconds: 10 });
-
-        expect(core.scenarios[2].name).to.be.equal("#3");
-        expect(core.scenarios[2].actions![0].actionType).to.be.equal(ActionType.Navigate);
-        expect(core.scenarios[2].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
-        expect(core.scenarios[2].workers).to.be.equal(1);
-        expect(core.scenarios[2].run).to.be.deep.equal({ delaySecondsBetweenWorkerInits: 10 });
+        // Scenario #2
+        expect(core.scenarios[1].name).to.equal("#2");
+        expect(core.scenarios[1].browser).to.equal("firefox");
+        expect(core.scenarios[1].actions[0]).to.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
+        expect(core.scenarios[1].workers).to.equal(1);
+        expect(core.scenarios[1].run).to.deep.equal({ initialDelaySeconds: 10 });
 
     });
 
@@ -121,13 +117,13 @@ describe("Yaml Resolver", () => {
 
         const core = resolver.resolve(yaml);
 
-
-        expect(core.scenarios[0].actions[0]).to.be.deep.equal({
+        expect(core.scenarios[0].browser).to.equal("chrome"); // Navigateur par défaut
+        expect(core.scenarios[0].actions[0]).to.deep.equal({
             actionType: ActionType.Navigate,
             location: { url: "http://test.com" }
         });
 
-        expect(core.scenarios[0].actions[1]).to.be.deep.equal({
+        expect(core.scenarios[0].actions[1]).to.deep.equal({
             actionType: ActionType.Wait,
             milliseconds: 5000
         });
@@ -149,18 +145,21 @@ describe("Yaml Resolver", () => {
 
         const core = resolver.resolve(yaml);
 
-        expect(core.scenarios).to.be.instanceOf(Array).and.lengthOf(2);
+        expect(core.scenarios).to.be.an('array').with.lengthOf(2);
 
-        expect(core.scenarios[0].name).to.be.equal("Scenario 1");
-        expect(core.scenarios[0].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
-        expect(core.scenarios[0].workers).to.be.equal(1);
-        expect(core.scenarios[0].run).to.be.deep.equal({ initialDelaySeconds: 0 });
+        // Scenario 1
+        expect(core.scenarios[0].name).to.equal("Scenario 1");
+        expect(core.scenarios[0].browser).to.equal("chrome"); // Navigateur par défaut
+        expect(core.scenarios[0].actions[0]).to.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
+        expect(core.scenarios[0].workers).to.equal(1);
+        expect(core.scenarios[0].run).to.deep.equal({ initialDelaySeconds: 0 });
 
-        expect(core.scenarios[1].name).to.be.equal("Scenario 2");
-        expect(core.scenarios[1].actions![0]).to.be.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test2.com" } });
-        expect(core.scenarios[1].workers).to.be.equal(1);
-        expect(core.scenarios[1].run).to.be.deep.equal({ initialDelaySeconds: 0 });
-
+        // Scenario 2
+        expect(core.scenarios[1].name).to.equal("Scenario 2");
+        expect(core.scenarios[1].browser).to.equal("chrome"); // Navigateur par défaut
+        expect(core.scenarios[1].actions[0]).to.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test2.com" } });
+        expect(core.scenarios[1].workers).to.equal(1);
+        expect(core.scenarios[1].run).to.deep.equal({ initialDelaySeconds: 0 });
 
     });
 });

@@ -35,11 +35,13 @@ describe("Integration tests", () => {
         const test = readYamlAndInterpret(`
 scenarios:
     - name: Scenario 1
+      browser: chrome
       iterations: 1
       location: "http://example.com/page1"
       steps:
         - navigate: $TEST
     - name: Scenario 2
+      browser: firefox
       workers: 5
       iterations: 1
       location: $LOC
@@ -54,7 +56,6 @@ scenarios:
 
         await test(mockedBrowser);
 
-
         expect(Object.keys(mockedBrowser.gotos())).to.include.members([
             "http://noop.com",
             "http://loc.com",
@@ -65,14 +66,13 @@ scenarios:
             "http://test3.com",
         ]);
 
-        expect(mockedBrowser.gotos()["http://loc.com"]).to.be.equal(5);
-        expect(mockedBrowser.gotos()["http://test.com"]).to.be.equal(1);
-        expect(mockedBrowser.gotos()["http://example.com/page1"]).to.be.equal(1);
-        expect(mockedBrowser.gotos()["http://test1.com"]).to.be.equal(1);
-        expect(mockedBrowser.gotos()["http://test2.com"]).to.be.equal(1);
-        expect(mockedBrowser.gotos()["http://test3.com"]).to.be.equal(1);
-
-        expect(mockedBrowser.gotos()["http://noop.com"]).to.be.equal(1);
+        expect(mockedBrowser.gotos()["http://loc.com"]).to.equal(5);
+        expect(mockedBrowser.gotos()["http://test.com"]).to.equal(1);
+        expect(mockedBrowser.gotos()["http://example.com/page1"]).to.equal(1);
+        expect(mockedBrowser.gotos()["http://test1.com"]).to.equal(1);
+        expect(mockedBrowser.gotos()["http://test2.com"]).to.equal(1);
+        expect(mockedBrowser.gotos()["http://test3.com"]).to.equal(1);
+        expect(mockedBrowser.gotos()["http://noop.com"]).to.equal(1);
 
     });
 
