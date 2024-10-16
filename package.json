@@ -14,17 +14,17 @@
     "@types/chai": "5.0.0",
     "@types/js-yaml": "4.0.9",
     "@types/mocha": "10.0.9",
-    "chai": "^5.1.1",
-    "cross-env": "^7.0.3",
+    "chai": "5.1.1",
+    "cross-env": "7.0.3",
     "esbuild": "0.24.0",
     "esbuild-node-externals": "1.15.0",
-    "mocha": "^10.7.3",
+    "mocha": "10.7.3",
     "nyc": "17.1.0",
     "prettier": "3.3.3",
-    "puppeteer": "^23.5.3",
+    "puppeteer": "23.5.3",
     "ts-mockito": "2.6.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "ts-node": "10.9.2",
+    "typescript": "5.6.3"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
