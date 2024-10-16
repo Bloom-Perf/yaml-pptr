@@ -99,7 +99,7 @@ scenarios:
 scenarios:
     - location: "http://example.com/page1"
       steps:
-        - wait: 3`);
+        - wait: 3000`);
 
     expect(test.scenarios).to.be.an('array').with.lengthOf(1);
     expect(test.scenarios[0].name).to.be.undefined;
