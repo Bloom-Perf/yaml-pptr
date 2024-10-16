@@ -83,7 +83,7 @@ scenarios:
     - iterations: 1
       location: "http://example.com/page1"
       steps:
-        - wait: 1000`;
+        - wait: 1`;
 
         // Appeler readYamlAndInterpret avec le mapping du navigateur
         await readYamlAndInterpret(yamlContent, { chrome: mockedBrowser });
