@@ -57,7 +57,7 @@ describe("Yaml Resolver", () => {
             actionType: ActionType.Navigate,
             location: { workerIndex: ["http://test1.com", "http://test2.com", "http://test3.com"] }
         });
-        expect(core.scenarios[3].workers).to.equal(10);
+        expect(core.scenarios[2].workers).to.equal(10);
 
     });
 
