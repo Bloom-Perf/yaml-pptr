@@ -44,14 +44,14 @@ describe("Yaml Resolver", () => {
         expect(core.scenarios[0].actions[0]).to.deep.equal({ actionType: ActionType.Navigate, location: { url: "TEST_VALUE" } });
         expect(core.scenarios[0].workers).to.equal(1);
 
-        // Scenario #3
-        expect(core.scenarios[2].name).to.equal("#3");
+        // Scenario #2
+        expect(core.scenarios[2].name).to.equal("#2");
         expect(core.scenarios[2].browser).to.equal("chrome"); // Navigateur par défaut
         expect(core.scenarios[2].actions[0]).to.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
         expect(core.scenarios[2].workers).to.equal(5);
 
-        // Scenario #4
-        expect(core.scenarios[3].name).to.equal("#4");
+        // Scenario #3
+        expect(core.scenarios[3].name).to.equal("#3");
         expect(core.scenarios[3].browser).to.equal("chrome"); // Navigateur par défaut
         expect(core.scenarios[3].actions[0]).to.deep.equal({
             actionType: ActionType.Navigate,
