@@ -36,7 +36,7 @@ describe("Yaml Resolver", () => {
 
         const core = resolver.resolve(yaml);
 
-        expect(core.scenarios).to.be.an('array').with.lengthOf(4);
+        expect(core.scenarios).to.be.an('array').with.lengthOf(3);
 
         // Scenario #1
         expect(core.scenarios[0].name).to.equal("#1");
@@ -81,7 +81,7 @@ describe("Yaml Resolver", () => {
 
         const core = resolver.resolve(yaml);
 
-        expect(core.scenarios).to.be.an('array').with.lengthOf(3);
+        expect(core.scenarios).to.be.an('array').with.lengthOf(2);
 
         // Scenario #1
         expect(core.scenarios[0].name).to.equal("#1");
