@@ -176,7 +176,7 @@ export class Resolver {
         const suffix = '[workerIndex]';
 
         if (urlOrEnv.startsWith('$')) {
-            if (urlOrEnv.endsWith(suffix)) {
+            if (urlOrEnv.startsWith('$INDEXED') && urlOrEnv.endsWith(suffix)) {
                 this.logger.debug(`Resolving indexed environment variable: "${urlOrEnv}"`);
                 const envVarName = urlOrEnv.substring(1, urlOrEnv.length - suffix.length);
                 const envVarValue = this.envVarResolve(envVarName);
