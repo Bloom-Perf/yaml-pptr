@@ -45,15 +45,15 @@ describe("Yaml Resolver", () => {
         expect(core.scenarios[0].workers).to.equal(1);
 
         // Scenario #2
-        expect(core.scenarios[2].name).to.equal("#2");
-        expect(core.scenarios[2].browser).to.equal("chrome"); // Navigateur par défaut
-        expect(core.scenarios[2].actions[0]).to.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
-        expect(core.scenarios[2].workers).to.equal(5);
+        expect(core.scenarios[1].name).to.equal("#2");
+        expect(core.scenarios[1].browser).to.equal("chrome"); // Navigateur par défaut
+        expect(core.scenarios[1].actions[0]).to.deep.equal({ actionType: ActionType.Navigate, location: { url: "http://test.com" } });
+        expect(core.scenarios[1].workers).to.equal(5);
 
         // Scenario #3
-        expect(core.scenarios[3].name).to.equal("#3");
-        expect(core.scenarios[3].browser).to.equal("chrome"); // Navigateur par défaut
-        expect(core.scenarios[3].actions[0]).to.deep.equal({
+        expect(core.scenarios[2].name).to.equal("#3");
+        expect(core.scenarios[2].browser).to.equal("chrome"); // Navigateur par défaut
+        expect(core.scenarios[2].actions[0]).to.deep.equal({
             actionType: ActionType.Navigate,
             location: { workerIndex: ["http://test1.com", "http://test2.com", "http://test3.com"] }
         });
