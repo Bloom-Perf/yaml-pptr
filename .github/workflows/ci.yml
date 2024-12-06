@@ -1,22 +1,84 @@
 name: Yaml-pptr CI
 
-on: [push, pull_request]
+permissions: 
+   contents: read
+   packages: read
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**.txt'
+      - '.gitignore'
+      - 'LICENSE'
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '**.txt'
+      - '.gitignore'
+      - 'LICENSE'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    env:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CI: true
+      
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4
         with:
           node-version: '21.x'
+          cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@bloom-perf'
-      - run: npm ci
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            .next/cache  # Pour Next.js si utilisé
+          key: ${{ runner.os }}-node-deps-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node-deps-
+
+      - name: Cache TypeScript
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/typescript
+            **/tsconfig.tsbuildinfo
+          key: ${{ runner.os }}-typescript-${{ hashFiles('**/tsconfig.json') }}-${{ hashFiles('**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-typescript-
+          
+      - name: Install dependencies
+        run: npm ci
+        
       - name: Build Typescript
         run: npm run build
+        
       - name: Run Tests
         run: npm run test
+        
       - name: NYC Coverage Report
+        if: always()  # S'exécute même si les tests échouent
         continue-on-error: true
-        run: npm run test:coverage
+        run: |
+          npm run test:coverage
+          npx nyc report --reporter=text-summary
