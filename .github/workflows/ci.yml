@@ -47,13 +47,6 @@ jobs:
           cache: 'npm'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@bloom-perf'
-
-      - name: Cache TypeScript
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4
-        with:
-          path: |
-            **/tsconfig.tsbuildinfo
-          key: ${{ runner.os }}-typescript-${{ hashFiles('**/tsconfig.json') }}
            
       - name: Install dependencies
         run: npm ci
