@@ -18,7 +18,7 @@
     "cross-env": "7.0.3",
     "esbuild": "0.24.0",
     "esbuild-node-externals": "1.15.0",
-    "mocha": "10.7.3",
+    "mocha": "11.0.1",
     "nyc": "17.1.0",
     "prettier": "3.3.3",
     "puppeteer": "23.5.3",
