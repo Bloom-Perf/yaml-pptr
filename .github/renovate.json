@@ -1,3 +1,31 @@
 {
-  "extends": ["config:best-practices"]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices"
+  ],
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "🤖 Dependency Dashboard",
+  "dependencyDashboardLabels": ["dependencies"],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    }
+  ],
+  "platformCommit": true,
+  "automergeStrategy": "squash",
+  "prCreation": "immediate",
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 0,
+  "reviewers": ["be-next"],
+  "assignees": ["be-next"],
+  "rebaseWhen": "auto",
+  "labels": ["dependencies"],
+  "commitMessagePrefix": "⬆️ ",
+  "semanticCommits": "enabled",
+  "commitMessageExtra": "to {{newVersion}}",
+  "commitMessageTopic": "{{depName}}"
 }
