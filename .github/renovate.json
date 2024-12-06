@@ -1,8 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:best-practices"
-  ],
+  "extends": ["config:best-practices"],
   "dependencyDashboard": true,
   "dependencyDashboardTitle": "🤖 Dependency Dashboard",
   "dependencyDashboardLabels": ["dependencies"],
@@ -15,7 +13,7 @@
       "platformAutomerge": true
     }
   ],
-  "platformCommit": true,
+  "platformCommit": "enabled",
   "automergeStrategy": "squash",
   "prCreation": "immediate",
   "prHourlyLimit": 0,
