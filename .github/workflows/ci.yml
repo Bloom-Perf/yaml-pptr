@@ -14,6 +14,7 @@ on:
       - '**.txt'
       - '.gitignore'
       - 'LICENSE'
+      - '.github/**'
   pull_request:
     branches: [ main ]
     types: [opened, synchronize, reopened]
@@ -23,6 +24,7 @@ on:
       - '**.txt'
       - '.gitignore'
       - 'LICENSE'
+      - '.github/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
