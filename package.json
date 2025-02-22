@@ -20,7 +20,7 @@
     "esbuild-node-externals": "1.18.0",
     "mocha": "11.1.0",
     "nyc": "17.1.0",
-    "prettier": "3.5.1",
+    "prettier": "3.5.2",
     "puppeteer": "24.2.1",
     "ts-mockito": "2.6.1",
     "ts-node": "10.9.2",
