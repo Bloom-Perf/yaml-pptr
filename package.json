@@ -1,6 +1,6 @@
 {
   "name": "@bloom-perf/yaml-pptr",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "A library to generate puppeteer browser controls through a YAML api.",
   "type": "module",
   "main": "dist/index.js",
@@ -11,20 +11,20 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
     "@testdeck/mocha": "0.3.3",
-    "@types/chai": "5.0.1",
+    "@types/chai": "5.2.0",
     "@types/js-yaml": "4.0.9",
     "@types/mocha": "10.0.10",
-    "chai": "5.1.2",
+    "chai": "5.2.0",
     "cross-env": "7.0.3",
     "esbuild": "0.25.0",
     "esbuild-node-externals": "1.18.0",
     "mocha": "11.1.0",
     "nyc": "17.1.0",
-    "prettier": "3.5.0",
-    "puppeteer": "24.2.0",
+    "prettier": "3.5.3",
+    "puppeteer": "24.4.0",
     "ts-mockito": "2.6.1",
     "ts-node": "10.9.2",
-    "typescript": "5.7.3"
+    "typescript": "5.8.2"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
