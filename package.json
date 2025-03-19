@@ -17,7 +17,7 @@
     "chai": "5.1.2",
     "cross-env": "7.0.3",
     "esbuild": "0.25.0",
-    "esbuild-node-externals": "1.16.0",
+    "esbuild-node-externals": "1.18.0",
     "mocha": "11.1.0",
     "nyc": "17.1.0",
     "prettier": "3.5.0",
