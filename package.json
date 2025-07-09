@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
-    "zod": "^3.23.8"
+    "zod": "^4.0.0"
   },
   "scripts": {
     "build": "rm -rf dist && node esbuild.js && tsc",
