@@ -15,7 +15,7 @@
     "@types/js-yaml": "4.0.9",
     "@types/mocha": "10.0.10",
     "chai": "5.2.1",
-    "cross-env": "7.0.3",
+    "cross-env": "10.0.0",
     "esbuild": "0.25.8",
     "esbuild-node-externals": "1.18.0",
     "mocha": "11.7.1",
