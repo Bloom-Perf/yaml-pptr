@@ -162,4 +162,66 @@ describe("Yaml Resolver", () => {
         expect(core.scenarios[1].run).to.deep.equal({ initialDelaySeconds: 0 });
 
     });
+
+    it("resolves click step", () => {
+        const resolver = new Resolver(v => "")
+
+        const yaml: RootYaml = {
+            scenarios: [
+                {
+                    location: "http://test.com",
+                    steps: [
+                        {
+                            click: "#submit-button"
+                        }
+                    ]
+                }
+            ]
+        }
+
+        const core = resolver.resolve(yaml);
+
+        expect(core.scenarios[0].actions[0]).to.deep.equal({
+            actionType: ActionType.Navigate,
+            location: { url: "http://test.com" }
+        });
+
+        expect(core.scenarios[0].actions[1]).to.deep.equal({
+            actionType: ActionType.Click,
+            selector: "#submit-button"
+        });
+    });
+
+    it("resolves input step", () => {
+        const resolver = new Resolver(v => "")
+
+        const yaml: RootYaml = {
+            scenarios: [
+                {
+                    location: "http://test.com",
+                    steps: [
+                        {
+                            input: {
+                                selector: "#username",
+                                text: "testuser"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+
+        const core = resolver.resolve(yaml);
+
+        expect(core.scenarios[0].actions[0]).to.deep.equal({
+            actionType: ActionType.Navigate,
+            location: { url: "http://test.com" }
+        });
+
+        expect(core.scenarios[0].actions[1]).to.deep.equal({
+            actionType: ActionType.Type,
+            selector: "#username",
+            text: "testuser"
+        });
+    });
 });

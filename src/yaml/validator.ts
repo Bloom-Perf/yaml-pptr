@@ -138,10 +138,23 @@ const waitSecondsStepSchema = z.object({
     wait: z.number(),
 });
 
+const clickStepSchema = z.object({
+    click: z.string(),
+});
+
+const inputStepSchema = z.object({
+    input: z.object({
+        selector: z.string(),
+        text: z.string(),
+    }),
+});
+
 const stepSchema = z.union([
     navigateStepSchema,
     waitForeverStepSchema,
     waitSecondsStepSchema,
+    clickStepSchema,
+    inputStepSchema,
 ]);
 
 export type StepYaml = z.infer<typeof stepSchema>;

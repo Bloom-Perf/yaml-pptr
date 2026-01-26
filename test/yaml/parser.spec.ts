@@ -111,4 +111,39 @@ scenarios:
     expect(test.scenarios[0].run).to.be.undefined;
 
   });
+
+  it("parses click step", () => {
+
+    const test = parseYaml(`
+scenarios:
+    - location: "http://example.com/page1"
+      steps:
+        - click: "#submit-button"`);
+
+    expect(test.scenarios).to.be.an('array').with.lengthOf(1);
+    expect(test.scenarios[0].location).to.equal("http://example.com/page1");
+    expect(test.scenarios[0].steps![0]).to.deep.equal({ click: "#submit-button" });
+
+  });
+
+  it("parses input step", () => {
+
+    const test = parseYaml(`
+scenarios:
+    - location: "http://example.com/page1"
+      steps:
+        - input:
+            selector: "#username"
+            text: "testuser"`);
+
+    expect(test.scenarios).to.be.an('array').with.lengthOf(1);
+    expect(test.scenarios[0].location).to.equal("http://example.com/page1");
+    expect(test.scenarios[0].steps![0]).to.deep.equal({
+      input: {
+        selector: "#username",
+        text: "testuser"
+      }
+    });
+
+  });
 });

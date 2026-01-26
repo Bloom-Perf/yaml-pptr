@@ -135,6 +135,273 @@ export PAGE_URL="http://example.com/page1,http://example.com/page2,http://exampl
 
 ---
 
+## YAML Reference
+
+### Scenario Configuration
+
+Each scenario supports the following properties:
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `name` | string | `Scenario N` | Name of the scenario |
+| `browser` | `chrome` \| `firefox` | `chrome` | Browser to use |
+| `run` | `PARALLEL` \| `SEQUENTIAL` | `PARALLEL` | Worker initialization strategy |
+| `initialDelaySeconds` | number | `0` | Delay before starting workers |
+| `workers` | number | `1` | Number of parallel workers |
+| `iterations` | number | `1` | Number of times each worker repeats the scenario |
+| `location` | string | - | Starting URL (supports env vars) |
+| `steps` | array | - | Simplified step syntax |
+| `actions` | array | - | Full action syntax |
+
+### Steps (Simplified Syntax)
+
+Steps provide a concise way to define common actions.
+
+#### navigate
+
+Navigate to a URL.
+
+```yaml
+steps:
+  - navigate: "http://example.com"
+  - navigate: "$ENV_VAR"           # Using environment variable
+```
+
+#### click
+
+Click on an element using CSS selector.
+
+```yaml
+steps:
+  - click: "#submit-button"
+  - click: ".nav-link"
+```
+
+#### input
+
+Type text into an input field.
+
+```yaml
+steps:
+  - input:
+      selector: "#username"
+      text: "myuser"
+```
+
+#### wait
+
+Wait for a specified number of seconds.
+
+```yaml
+steps:
+  - wait: 3    # Wait 3 seconds
+```
+
+#### waitForever
+
+Wait indefinitely (useful for debugging or keeping browser open).
+
+```yaml
+steps:
+  - waitForever
+```
+
+### Actions (Full Syntax)
+
+Actions provide complete control with all available options. Use the `actions` array instead of `steps`.
+
+#### GOTO
+
+Navigate to a URL with options.
+
+```yaml
+actions:
+  - type: GOTO
+    url: "http://example.com"
+    options:
+      timeout: 30000                    # Navigation timeout in ms
+      waitUntil: networkidle0           # load | domcontentloaded | networkidle0 | networkidle2
+      referer: "http://referrer.com"    # Referer header
+```
+
+#### CLICK
+
+Click on an element with options.
+
+```yaml
+actions:
+  - type: CLICK
+    selector: "#button"
+    options:
+      button: left       # left | right | middle
+      clickCount: 2      # Number of clicks (e.g., 2 for double-click)
+      delay: 100         # Delay between mousedown and mouseup in ms
+```
+
+#### TYPE
+
+Type text into an element.
+
+```yaml
+actions:
+  - type: TYPE
+    selector: "#input-field"
+    text: "Hello World"
+    options:
+      delay: 50          # Delay between key presses in ms
+```
+
+#### WAIT
+
+Wait for a specified time in milliseconds.
+
+```yaml
+actions:
+  - type: WAIT
+    milliseconds: 2000
+```
+
+#### WAIT_FOR_SELECTOR
+
+Wait for an element to appear.
+
+```yaml
+actions:
+  - type: WAIT_FOR_SELECTOR
+    selector: ".loaded-content"
+    options:
+      visible: true      # Wait for element to be visible
+      hidden: false      # Wait for element to be hidden
+      timeout: 5000      # Timeout in ms
+```
+
+#### WAIT_FOR_TIMEOUT
+
+Wait for a specified timeout (alternative to WAIT).
+
+```yaml
+actions:
+  - type: WAIT_FOR_TIMEOUT
+    timeout: 1000
+```
+
+#### SCREENSHOT
+
+Take a screenshot.
+
+```yaml
+actions:
+  - type: SCREENSHOT
+    path: "screenshot.png"
+    options:
+      type: png              # png | jpeg
+      quality: 80            # Quality for jpeg (0-100)
+      fullPage: true         # Capture full scrollable page
+      omitBackground: false  # Hide default white background
+      encoding: binary       # binary | base64
+      clip:                  # Capture specific region
+        x: 0
+        y: 0
+        width: 800
+        height: 600
+```
+
+#### EVALUATE
+
+Execute JavaScript in the browser context.
+
+```yaml
+actions:
+  - type: EVALUATE
+    script: "document.title"
+```
+
+#### SET_VIEWPORT
+
+Set the browser viewport size.
+
+```yaml
+actions:
+  - type: SET_VIEWPORT
+    width: 1920
+    height: 1080
+```
+
+#### PAUSE
+
+Pause execution and wait for user input (press Enter to continue).
+
+```yaml
+actions:
+  - type: PAUSE
+```
+
+#### CLOSE
+
+Close the current page.
+
+```yaml
+actions:
+  - type: CLOSE
+```
+
+### Environment Variables
+
+You can use environment variables in `location` and `navigate` steps:
+
+```yaml
+# Simple variable
+location: "$BASE_URL"
+
+# Indexed variable (different value per worker)
+location: "$URLS[workerIndex]"
+```
+
+Set indexed variables as comma-separated values:
+
+```bash
+export URLS="http://site1.com,http://site2.com,http://site3.com"
+```
+
+### Complete Example
+
+```yaml
+scenarios:
+  - name: Login and Dashboard Test
+    browser: chrome
+    run: PARALLEL
+    workers: 2
+    iterations: 1
+    location: "$APP_URL"
+    steps:
+      - input:
+          selector: "#username"
+          text: "testuser"
+      - input:
+          selector: "#password"
+          text: "password123"
+      - click: "#login-button"
+      - wait: 2
+
+  - name: Screenshot Test
+    browser: chrome
+    location: "http://example.com"
+    actions:
+      - type: SET_VIEWPORT
+        width: 1920
+        height: 1080
+      - type: WAIT_FOR_SELECTOR
+        selector: ".content"
+        options:
+          visible: true
+      - type: SCREENSHOT
+        path: "full-page.png"
+        options:
+          fullPage: true
+```
+
+---
+
 ## Running Tests
 
 The project includes a comprehensive test suite. To run the tests:

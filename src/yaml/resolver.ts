@@ -92,6 +92,23 @@ export class Resolver {
             return this.createNavigateAction(stepYaml.navigate);
         }
 
+        if ('click' in stepYaml) {
+            this.logger.debug(`Resolving step: click "${stepYaml.click}"`);
+            return {
+                actionType: ActionType.Click,
+                selector: stepYaml.click,
+            } as ClickAction;
+        }
+
+        if ('input' in stepYaml) {
+            this.logger.debug(`Resolving step: input into "${stepYaml.input.selector}"`);
+            return {
+                actionType: ActionType.Type,
+                selector: stepYaml.input.selector,
+                text: stepYaml.input.text,
+            } as TypeAction;
+        }
+
         throw new Error(`Unknown step format: ${JSON.stringify(stepYaml)}`);
     }
 
