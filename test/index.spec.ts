@@ -16,6 +16,10 @@ describe("Integration tests", () => {
                     g[str] = (g[str] || 0) + 1;
                     return Promise.resolve();
                 },
+                async evaluate() {
+                    // Mock evaluate - used by wait action
+                    return Promise.resolve();
+                },
                 async close() {
                     console.log(`-> close`);
                     return Promise.resolve();
