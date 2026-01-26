@@ -1,26 +1,35 @@
 import * as p from 'puppeteer';
+import { YpLogger, dumbLogger } from '../core/logger';
 import {
     Action,
     ActionType,
-    Scenario,
-    NavigateAction,
-    WaitAction,
-    WaitForeverAction,
-    GotoAction,
     ClickAction,
-    TypeAction,
-    WaitForSelectorAction,
-    WaitForTimeoutAction,
-    PauseAction,
-    ScreenshotAction,
-    CloseAction,
     EvaluateAction,
+    GotoAction,
+    NavigateAction,
+    Scenario,
+    ScreenshotAction,
     SetViewportAction,
+    TypeAction,
+    WaitAction,
+    WaitForSelectorAction,
+    WaitForTimeoutAction
 } from '../core/model';
-import { YpLogger, dumbLogger } from '../core/logger';
 
 type LoadEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
 type MouseButton = 'left' | 'right' | 'middle';
+
+function ensureCorrectExtension(path: string, type?: 'png' | 'jpeg' | 'webp'): `${string}.png` | `${string}.jpeg` | `${string}.webp` {
+    const detectedType = type || 'png';
+
+    // Si le chemin a déjà une extension valide, on le retourne tel quel
+    if (path.endsWith('.png') || path.endsWith('.jpeg') || path.endsWith('.jpg') || path.endsWith('.webp')) {
+        return path as `${string}.png` | `${string}.jpeg` | `${string}.webp`;
+    }
+
+    // Sinon, on ajoute l'extension appropriée basée sur le type spécifié
+    return `${path}.${detectedType}` as `${string}.png` | `${string}.jpeg` | `${string}.webp`;
+}
 
 export const evalScenario = async (browser: p.Browser, scenario: Scenario, logger: YpLogger = dumbLogger): Promise<void[]> => {
     return await evalSafely(scenario.workers, scenario.name, async workerIndex => {
@@ -132,7 +141,8 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
                 const screenshotAction = action as ScreenshotAction;
                 logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > SCREENSHOT "${screenshotAction.path}"`);
                 const screenshotOptions = {
-                    path: screenshotAction.path,
+                    path: ensureCorrectExtension(screenshotAction.path, screenshotAction.options?.type),
+                    //path: screenshotAction.path,
                     type: screenshotAction.options?.type,
                     quality: screenshotAction.options?.quality,
                     fullPage: screenshotAction.options?.fullPage,
