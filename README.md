@@ -135,6 +135,179 @@ export PAGE_URL="http://example.com/page1,http://example.com/page2,http://exampl
 
 ---
 
+## Real-World Example
+
+Here's a complete example that tests a login flow on a demo website.
+
+### Project Structure
+
+```
+my-automation/
+├── scenarios/
+│   └── login-test.yaml
+├── src/
+│   └── runner.ts
+├── package.json
+└── tsconfig.json
+```
+
+### 1. Create the YAML scenario file
+
+**scenarios/login-test.yaml**
+```yaml
+scenarios:
+  # Test login on Sauce Demo (a real test website)
+  - name: Sauce Demo Login Test
+    browser: chrome
+    workers: 1
+    iterations: 1
+    location: "https://www.saucedemo.com"
+    steps:
+      # Fill login form
+      - input:
+          selector: "#user-name"
+          text: "standard_user"
+      - input:
+          selector: "#password"
+          text: "secret_sauce"
+      - click: "#login-button"
+      - wait: 2
+
+    actions:
+      # Verify we're on the inventory page
+      - type: WAIT_FOR_SELECTOR
+        selector: ".inventory_list"
+        options:
+          visible: true
+          timeout: 5000
+      # Take a screenshot of the result
+      - type: SCREENSHOT
+        path: "screenshots/inventory-page.png"
+        options:
+          fullPage: true
+
+  # Load test with multiple workers
+  - name: Load Test - Homepage
+    browser: chrome
+    run: PARALLEL
+    workers: 3
+    iterations: 2
+    location: "https://www.saucedemo.com"
+    steps:
+      - wait: 1
+```
+
+### 2. Create the runner script
+
+**src/runner.ts**
+```typescript
+import { readYamlAndInterpret } from '@bloom-perf/yaml-pptr';
+import * as fs from 'fs';
+import * as path from 'path';
+
+async function main() {
+  // Read the YAML file
+  const yamlPath = path.join(__dirname, '../scenarios/login-test.yaml');
+  const yamlContent = fs.readFileSync(yamlPath, 'utf-8');
+
+  // Create screenshots directory
+  const screenshotsDir = path.join(__dirname, '../screenshots');
+  if (!fs.existsSync(screenshotsDir)) {
+    fs.mkdirSync(screenshotsDir, { recursive: true });
+  }
+
+  console.log('Starting automation...');
+
+  try {
+    await readYamlAndInterpret(yamlContent);
+    console.log('Automation completed successfully!');
+  } catch (error) {
+    console.error('Automation failed:', error);
+    process.exit(1);
+  }
+}
+
+main();
+```
+
+### 3. Configure package.json
+
+**package.json**
+```json
+{
+  "name": "my-automation",
+  "scripts": {
+    "start": "ts-node src/runner.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@bloom-perf/yaml-pptr": "latest"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  }
+}
+```
+
+### 4. Run the automation
+
+```bash
+# Install dependencies
+npm install
+
+# Run the scenarios
+npm start
+```
+
+### Using Environment Variables
+
+For sensitive data like credentials, use environment variables:
+
+**scenarios/secure-login.yaml**
+```yaml
+scenarios:
+  - name: Secure Login
+    location: "$APP_URL"
+    steps:
+      - input:
+          selector: "#username"
+          text: "$USERNAME"
+      - input:
+          selector: "#password"
+          text: "$PASSWORD"
+      - click: "#submit"
+```
+
+**Run with environment variables:**
+```bash
+APP_URL=https://myapp.com USERNAME=myuser PASSWORD=mypass npm start
+```
+
+### Using Indexed Variables for Load Testing
+
+Test multiple URLs with different workers:
+
+**scenarios/multi-url-test.yaml**
+```yaml
+scenarios:
+  - name: Multi-URL Load Test
+    workers: 3
+    iterations: 5
+    location: "$TEST_URLS[workerIndex]"
+    steps:
+      - wait: 2
+```
+
+**Run:**
+```bash
+TEST_URLS="https://site1.com,https://site2.com,https://site3.com" npm start
+```
+
+Each worker will test a different URL from the list.
+
+---
+
 ## YAML Reference
 
 ### Scenario Configuration
