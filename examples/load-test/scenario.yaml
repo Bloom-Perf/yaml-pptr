@@ -1,0 +1,16 @@
+scenarios:
+  - name: Load Test - Sauce Demo
+    browser: chrome
+    run: PARALLEL
+    workers: 3
+    iterations: 2
+    location: "https://www.saucedemo.com"
+    steps:
+      - input:
+          selector: "#user-name"
+          text: "standard_user"
+      - input:
+          selector: "#password"
+          text: "secret_sauce"
+      - click: "#login-button"
+      - wait: 1

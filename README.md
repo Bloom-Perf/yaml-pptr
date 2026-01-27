@@ -36,6 +36,15 @@ scenarios:
 readYamlAndInterpret(yaml);
 ```
 
+## Examples
+
+Ready-to-run examples are available in the [`examples/`](./examples) directory:
+
+```bash
+npm run example:login   # Login test with screenshot
+npm run example:load    # Load test (3 workers × 2 iterations)
+```
+
 ## Getting Started
 
 ### Project Structure

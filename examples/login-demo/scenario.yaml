@@ -1,0 +1,26 @@
+scenarios:
+  - name: Sauce Demo Login
+    browser: chrome
+    location: "https://www.saucedemo.com"
+    steps:
+      # Fill login form
+      - input:
+          selector: "#user-name"
+          text: "standard_user"
+      - input:
+          selector: "#password"
+          text: "secret_sauce"
+      - click: "#login-button"
+      - wait: 2
+    actions:
+      # Wait for inventory page to load
+      - type: WAIT_FOR_SELECTOR
+        selector: ".inventory_list"
+        options:
+          visible: true
+          timeout: 5000
+      # Take a screenshot
+      - type: SCREENSHOT
+        path: "examples/login-demo/screenshots/inventory.png"
+        options:
+          fullPage: true
