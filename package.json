@@ -38,7 +38,7 @@
     "example:load": "tsx examples/load-test/run.ts"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public"
   },
   "repository": {
     "type": "git",
