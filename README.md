@@ -1,5 +1,6 @@
 # yaml-pptr
 
+[![npm version](https://img.shields.io/npm/v/@bloom-perf/yaml-pptr?style=flat&logo=npm)](https://www.npmjs.com/package/@bloom-perf/yaml-pptr)
 [![GitHub last commit](https://img.shields.io/github/last-commit/bloom-perf/yaml-pptr?logo=github)](https://github.com/bloom-perf/yaml-pptr)
 [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/bloom-perf/yaml-pptr/ci.yml?style=flat&branch=main)](https://github.com/Bloom-Perf/yaml-pptr/actions)
 [![GitHub release](https://img.shields.io/github/v/release/bloom-perf/yaml-pptr?style=flat)](https://github.com/Bloom-Perf/yaml-pptr/releases)
