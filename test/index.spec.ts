@@ -1,6 +1,7 @@
 // test/index.spec.ts
 import { expect } from 'chai';
 import { readYamlAndInterpret } from "../src/index";
+import { ScenarioContext } from "../src/core/model";
 
 interface CallLog {
     method: string;
@@ -78,7 +79,7 @@ scenarios:
       location: $INDEXED[workerIndex]`;
 
         // Appeler readYamlAndInterpret avec le mapping du navigateur
-        await readYamlAndInterpret(yamlContent, { chrome: mockedBrowser });
+        await readYamlAndInterpret(yamlContent, { browsers: { chrome: mockedBrowser } });
 
         // Assertions pour vérifier que les URLs ont été visitées le nombre de fois attendu
         expect(Object.keys(mockedBrowser.gotos())).to.include.members([
@@ -111,7 +112,7 @@ scenarios:
         - wait: 1`;
 
         // Appeler readYamlAndInterpret avec le mapping du navigateur
-        await readYamlAndInterpret(yamlContent, { chrome: mockedBrowser });
+        await readYamlAndInterpret(yamlContent, { browsers: { chrome: mockedBrowser } });
 
         // Vous pouvez ajouter des assertions spécifiques si nécessaire
     });
@@ -128,7 +129,7 @@ scenarios:
         - click: "#submit-button"
         - click: ".nav-link"`;
 
-        await readYamlAndInterpret(yamlContent, { chrome: mockedBrowser });
+        await readYamlAndInterpret(yamlContent, { browsers: { chrome: mockedBrowser } });
 
         const clickCalls = calls.filter(c => c.method === 'click');
         expect(clickCalls).to.have.lengthOf(2);
@@ -152,7 +153,7 @@ scenarios:
             selector: "#password"
             text: "secret123"`;
 
-        await readYamlAndInterpret(yamlContent, { chrome: mockedBrowser });
+        await readYamlAndInterpret(yamlContent, { browsers: { chrome: mockedBrowser } });
 
         const typeCalls = calls.filter(c => c.method === 'type');
         expect(typeCalls).to.have.lengthOf(2);
@@ -181,7 +182,7 @@ scenarios:
         - click: "#login-button"
         - wait: 1`;
 
-        await readYamlAndInterpret(yamlContent, { chrome: mockedBrowser });
+        await readYamlAndInterpret(yamlContent, { browsers: { chrome: mockedBrowser } });
 
         // Verify the sequence of calls
         const actionCalls = calls.filter(c => ['goto', 'type', 'click', 'evaluate'].includes(c.method));
@@ -191,5 +192,37 @@ scenarios:
         expect(actionCalls[2]).to.deep.equal({ method: 'type', args: ['#password', 'password123'] });
         expect(actionCalls[3]).to.deep.equal({ method: 'click', args: ['#login-button'] });
         expect(actionCalls[4].method).to.equal('evaluate'); // wait action uses evaluate
+    });
+
+    it("onPage callback receives correct context through full stack", async () => {
+        const calls: CallLog[] = [];
+        const mockedBrowser = createMockedBrowser({}, calls);
+        const contexts: ScenarioContext[] = [];
+
+        const yamlContent = `
+scenarios:
+    - name: My Test Scenario
+      workers: 2
+      iterations: 2
+      location: "http://example.com"`;
+
+        await readYamlAndInterpret(yamlContent, {
+            browsers: { chrome: mockedBrowser },
+            onPage: async (_page, ctx) => {
+                contexts.push(ctx);
+            },
+        });
+
+        // 2 workers * 2 iterations = 4 calls
+        expect(contexts).to.have.lengthOf(4);
+
+        // All should reference the correct scenario name
+        expect(contexts.every(c => c.scenarioName === 'My Test Scenario')).to.be.true;
+
+        // Should have iterations 0 and 1 for each worker
+        const worker0 = contexts.filter(c => c.workerIndex === 0);
+        const worker1 = contexts.filter(c => c.workerIndex === 1);
+        expect(worker0.map(c => c.iteration)).to.include.members([0, 1]);
+        expect(worker1.map(c => c.iteration)).to.include.members([0, 1]);
     });
 });

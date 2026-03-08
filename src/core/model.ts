@@ -165,3 +165,11 @@ export type Scenario = {
 export type Root = {
     scenarios: Scenario[];
 };
+
+export type ScenarioContext = {
+    scenarioName: string;
+    workerIndex: number;
+    iteration: number;
+};
+
+export type OnPageCallback = (page: import('puppeteer').Page, context: ScenarioContext) => Promise<void>;
