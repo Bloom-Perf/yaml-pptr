@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { evalScenario } from '../../src/puppet/interpreter';
-import { ActionType, Scenario, Action } from '../../src/core/model';
+import { ActionType, Scenario, Action, ScenarioContext } from '../../src/core/model';
 
 describe('Interpreter', () => {
     // Track all method calls for assertions
@@ -454,6 +454,68 @@ describe('Interpreter', () => {
 
             const gotoCalls = calls.filter(c => c.method === 'goto');
             expect(gotoCalls).to.have.lengthOf(2);
+        });
+    });
+
+    describe('onPage callback', () => {
+        it('calls onPage with correct ScenarioContext', async () => {
+            const calls: CallLog[] = [];
+            const browser = createMockBrowser(calls);
+            const contexts: ScenarioContext[] = [];
+
+            const scenario = createScenario([
+                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
+            ], { name: 'My Scenario' });
+
+            await evalScenario(browser, scenario, undefined, async (_page, ctx) => {
+                contexts.push(ctx);
+            });
+
+            expect(contexts).to.have.lengthOf(1);
+            expect(contexts[0]).to.deep.equal({
+                scenarioName: 'My Scenario',
+                workerIndex: 0,
+                iteration: 0,
+            });
+        });
+
+        it('calls onPage for each worker x iteration combination', async () => {
+            const calls: CallLog[] = [];
+            const browser = createMockBrowser(calls);
+            const contexts: ScenarioContext[] = [];
+
+            const scenario = createScenario([
+                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
+            ], { workers: 2, iterations: 3 });
+
+            await evalScenario(browser, scenario, undefined, async (_page, ctx) => {
+                contexts.push(ctx);
+            });
+
+            expect(contexts).to.have.lengthOf(6); // 2 workers * 3 iterations
+
+            // Each worker should have iterations 0, 1, 2
+            const worker0 = contexts.filter(c => c.workerIndex === 0);
+            const worker1 = contexts.filter(c => c.workerIndex === 1);
+            expect(worker0.map(c => c.iteration)).to.include.members([0, 1, 2]);
+            expect(worker1.map(c => c.iteration)).to.include.members([0, 1, 2]);
+
+            // All should have the correct scenario name
+            expect(contexts.every(c => c.scenarioName === 'Test Scenario')).to.be.true;
+        });
+
+        it('works without onPage callback (backward compatibility)', async () => {
+            const calls: CallLog[] = [];
+            const browser = createMockBrowser(calls);
+            const scenario = createScenario([
+                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
+            ]);
+
+            // Should not throw when onPage is not provided
+            await evalScenario(browser, scenario);
+
+            const gotoCalls = calls.filter(c => c.method === 'goto');
+            expect(gotoCalls).to.have.lengthOf(1);
         });
     });
 

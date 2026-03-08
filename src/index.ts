@@ -1,18 +1,25 @@
 // src/index.ts
 import * as p from 'puppeteer';
-import { SupportedBrowser } from './core/model';
+import { SupportedBrowser, OnPageCallback } from './core/model';
 import { parseYaml } from './yaml/parser';
 import { Resolver } from './yaml/resolver';
 import { evalScenario } from './puppet/interpreter';
 import { YpLogger, dumbLogger } from './core/logger';
 
+export type { ScenarioContext, OnPageCallback } from './core/model';
 
+export type ReadYamlOptions = {
+    browsers?: { [key in SupportedBrowser]?: p.Browser };
+    logger?: YpLogger;
+    onPage?: OnPageCallback;
+};
 
 export const readYamlAndInterpret = async (
     yamlContent: string,
-    browsers: { [key in SupportedBrowser]?: p.Browser } = {},
-    logger: YpLogger = dumbLogger
+    options: ReadYamlOptions = {}
 ): Promise<void> => {
+    const { browsers = {}, logger = dumbLogger, onPage } = options;
+
     // Analyse et résolution du YAML
     const rootYaml = parseYaml(yamlContent);
 
@@ -81,7 +88,7 @@ export const readYamlAndInterpret = async (
 
         try {
             for (const scenario of scenarios) {
-                await evalScenario(browser, scenario, logger);
+                await evalScenario(browser, scenario, logger, onPage);
             }
         } catch (error) {
             console.error(`Erreur lors de l'exécution des scénarios pour ${browserName}:`, error);

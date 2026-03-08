@@ -7,6 +7,7 @@ import {
     EvaluateAction,
     GotoAction,
     NavigateAction,
+    OnPageCallback,
     Scenario,
     ScreenshotAction,
     SetViewportAction,
@@ -31,7 +32,7 @@ function ensureCorrectExtension(path: string, type?: 'png' | 'jpeg' | 'webp'): `
     return `${path}.${detectedType}` as `${string}.png` | `${string}.jpeg` | `${string}.webp`;
 }
 
-export const evalScenario = async (browser: p.Browser, scenario: Scenario, logger: YpLogger = dumbLogger): Promise<void[]> => {
+export const evalScenario = async (browser: p.Browser, scenario: Scenario, logger: YpLogger = dumbLogger, onPage?: OnPageCallback): Promise<void[]> => {
     return await evalSafely(scenario.workers, scenario.name, async workerIndex => {
         for (let i = 0; i < scenario.iterations; i++) {
 
@@ -45,6 +46,15 @@ export const evalScenario = async (browser: p.Browser, scenario: Scenario, logge
             }
 
             const page = await browser.newPage();
+
+            if (onPage) {
+                await onPage(page, {
+                    scenarioName: scenario.name,
+                    workerIndex,
+                    iteration: i,
+                });
+            }
+
             await evalScenarioOnce(scenario.name, scenario.actions, page, workerIndex, logger);
             await page.close();
         }
