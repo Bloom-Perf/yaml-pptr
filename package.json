@@ -27,7 +27,7 @@
     "typescript": "5.9.3"
   },
   "dependencies": {
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^5.0.0",
     "zod": "^4.0.0"
   },
   "scripts": {
