@@ -166,6 +166,11 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
                 await sleep(waitForTimeoutAction.timeout);
                 break;
             case ActionType.Pause:
+                if (!process.stdin.isTTY) {
+                    // Nobody can press Enter (CI, container, piped input): waiting would block forever
+                    logger.warn(`Scenario "${scenarioName}" (worker ${workerIndex}) > PAUSE ignored: no interactive terminal`);
+                    break;
+                }
                 logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > PAUSE, press Enter to continue...`);
                 await new Promise<void>(resolve => {
                     process.stdin.resume();

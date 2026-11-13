@@ -9,7 +9,7 @@ import { YpLogger, dumbLogger } from './core/logger.js';
 import { BrowserLaunchError } from './core/errors.js';
 
 export type { ScenarioContext, OnPageCallback } from './core/model.js';
-export { WorkerError, BrowserLaunchError } from './core/errors.js';
+export { WorkerError, BrowserLaunchError, ConfigurationError } from './core/errors.js';
 
 export type ReadYamlOptions = {
     /** Already launched browsers to use instead of launching new ones. They are not closed. */
@@ -23,12 +23,16 @@ export type ReadYamlOptions = {
 };
 
 /**
- * Parses the YAML, then runs every scenario. Scenarios targeting different
- * browsers run in parallel; scenarios sharing a browser run one after another.
+ * Parses and validates the YAML, resolves environment variables, then runs
+ * every scenario. All scenarios start at the same time (each one with its own
+ * workers and start strategy), whatever the browser they target.
  *
- * All scenarios are always run to completion. If anything failed (browser
- * launch or worker), the promise rejects with an `AggregateError` whose
- * `errors` are `BrowserLaunchError` / `WorkerError` instances.
+ * - An invalid configuration (YAML syntax, unknown key, missing environment
+ *   variable...) rejects with a `ConfigurationError` before anything runs.
+ * - Otherwise all scenarios are always run to completion. If anything failed
+ *   (browser launch or iteration), the promise rejects with an `AggregateError`
+ *   whose `errors` are `BrowserLaunchError` / `WorkerError` instances, in
+ *   scenario order.
  */
 export const readYamlAndInterpret = async (
     yamlContent: string,
@@ -40,11 +44,9 @@ export const readYamlAndInterpret = async (
 
     const domainResolver = new Resolver((envVarName: string) => {
         const envVarValue = process.env[envVarName];
-
-        logger.debug(`Resolving env variable "${envVarName}" with value ***`);
         if (envVarValue) return envVarValue;
 
-        throw new Error(`Tried to resolve env variable ${envVarName} but was empty.`);
+        throw new Error(`environment variable "${envVarName}" is not set (or empty)`);
     }, logger);
 
     const root = domainResolver.resolve(rootYaml);
@@ -56,9 +58,8 @@ export const readYamlAndInterpret = async (
         scenariosByBrowser.set(scenario.browser, list);
     }
 
-    const errors: unknown[] = [];
-
-    const runOnBrowser = async (browserName: SupportedBrowser, scenarios: Scenario[]): Promise<void> => {
+    /** Runs the scenarios of one browser in parallel; resolves to their errors, in scenario order. */
+    const runOnBrowser = async (browserName: SupportedBrowser, scenarios: Scenario[]): Promise<unknown[]> => {
         let browser = browsers[browserName];
         const shouldClose = !browser;
 
@@ -69,27 +70,34 @@ export const readYamlAndInterpret = async (
             } catch (e) {
                 const error = new BrowserLaunchError(browserName, e);
                 logger.error(error.message);
-                errors.push(error);
-                return;
+                return [error];
             }
         }
+        const runningBrowser = browser;
 
         try {
-            for (const scenario of scenarios) {
-                try {
-                    await evalScenario(browser, scenario, logger, onPage);
-                } catch (e) {
-                    errors.push(...(e instanceof AggregateError ? e.errors : [e]));
-                }
-            }
+            const errorsPerScenario = await Promise.all(
+                scenarios.map(async scenario => {
+                    try {
+                        await evalScenario(runningBrowser, scenario, logger, onPage);
+                        return [];
+                    } catch (e) {
+                        return e instanceof AggregateError ? e.errors : [e];
+                    }
+                })
+            );
+            return errorsPerScenario.flat();
         } finally {
             if (shouldClose) {
-                await browser.close().catch(e => logger.warn(`Failed to close ${browserName}: ${e}`));
+                await runningBrowser.close().catch(e => logger.warn(`Failed to close ${browserName}: ${e}`));
             }
         }
     };
 
-    await Promise.all([...scenariosByBrowser].map(([name, scenarios]) => runOnBrowser(name, scenarios)));
+    const errorsPerBrowser = await Promise.all(
+        [...scenariosByBrowser].map(([name, scenarios]) => runOnBrowser(name, scenarios))
+    );
+    const errors = errorsPerBrowser.flat();
 
     if (errors.length > 0) {
         throw new AggregateError(errors, `${errors.length} error(s) occurred while running scenarios`);

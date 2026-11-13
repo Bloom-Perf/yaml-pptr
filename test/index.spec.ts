@@ -1,6 +1,6 @@
 // test/index.spec.ts
 import { expect } from 'chai';
-import { readYamlAndInterpret, WorkerError, BrowserLaunchError } from "../src/index.js";
+import { readYamlAndInterpret, WorkerError, BrowserLaunchError, ConfigurationError } from "../src/index.js";
 import { ScenarioContext } from "../src/core/model.js";
 
 interface CallLog {
@@ -310,5 +310,99 @@ scenarios:
             expect(errors[0]).to.be.instanceOf(BrowserLaunchError);
             expect(errors[0].browser).to.equal("firefox");
         });
+    });
+
+    it("runs scenarios targeting the same browser in parallel", async () => {
+        const starts: Record<string, number> = {};
+        const t0 = Date.now();
+
+        await readYamlAndInterpret(`
+scenarios:
+    - name: Slow
+      location: "http://slow.com"
+      steps:
+        - wait: 0.3
+    - name: Fast
+      location: "http://fast.com"`, {
+            browsers: { chrome: createMockedBrowser() },
+            onPage: async (_page, ctx) => {
+                starts[ctx.scenarioName] = Date.now() - t0;
+            },
+        });
+
+        // "Fast" does not wait for "Slow" to finish (which takes >= 300 ms)
+        expect(starts["Slow"]).to.be.below(150);
+        expect(starts["Fast"]).to.be.below(150);
+    });
+
+    describe("configuration errors", () => {
+        const expectConfigurationErrorBeforeAnyPage = async (yamlContent: string, ...fragments: string[]) => {
+            const calls: CallLog[] = [];
+            let caught: unknown;
+            try {
+                await readYamlAndInterpret(yamlContent, { browsers: { chrome: createMockedBrowser({}, calls) } });
+            } catch (e) {
+                caught = e;
+            }
+            expect(caught).to.be.instanceOf(ConfigurationError);
+            for (const fragment of fragments) {
+                expect((caught as Error).message).to.include(fragment);
+            }
+            // Nothing ran: not even the valid scenarios
+            expect(calls.filter(c => c.method === 'newPage')).to.have.lengthOf(0);
+        };
+
+        it("rejects a missing environment variable before opening any page", async () => {
+            delete process.env["YP_TEST_MISSING_VAR"];
+            await expectConfigurationErrorBeforeAnyPage(`
+scenarios:
+    - name: Valid
+      location: "http://ok.com"
+    - name: Login
+      location: "http://ok.com/login"
+      steps:
+        - input:
+            selector: "#password"
+            text: "\${YP_TEST_MISSING_VAR}"`, 'Scenario "Login"', '"YP_TEST_MISSING_VAR" is not set');
+        });
+
+        it("rejects an unknown key before opening any page", async () => {
+            await expectConfigurationErrorBeforeAnyPage(`
+scenarios:
+    - location: "http://ok.com"
+      iteration: 3`, "iteration");
+        });
+    });
+
+    it("never logs typed texts nor resolved environment values", async () => {
+        process.env["YP_TEST_PASSWORD"] = "env-secret-42";
+        const logs: string[] = [];
+        const logger = {
+            debug: (m: string) => logs.push(m),
+            info: (m: string) => logs.push(m),
+            warn: (m: string) => logs.push(m),
+            error: (m: string) => logs.push(m),
+        };
+
+        try {
+            await readYamlAndInterpret(`
+scenarios:
+    - location: "http://example.com/login"
+      steps:
+        - input:
+            selector: "#user"
+            text: "literal-secret-123"
+        - input:
+            selector: "#password"
+            text: "\${YP_TEST_PASSWORD}"`, { browsers: { chrome: createMockedBrowser() }, logger });
+        } finally {
+            delete process.env["YP_TEST_PASSWORD"];
+        }
+
+        expect(logs).to.not.be.empty;
+        for (const message of logs) {
+            expect(message).to.not.include("env-secret-42");
+            expect(message).to.not.include("literal-secret-123");
+        }
     });
 });

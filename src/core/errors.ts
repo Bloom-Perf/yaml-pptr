@@ -1,6 +1,18 @@
 const describe = (cause: unknown): string => (cause instanceof Error ? cause.message : String(cause));
 
 /**
+ * Raised before anything runs when the configuration is invalid: YAML syntax,
+ * schema validation (unknown key, wrong type...) or environment variable
+ * resolution (missing variable, not enough per-worker values...).
+ */
+export class ConfigurationError extends Error {
+    constructor(message: string, options?: ErrorOptions) {
+        super(message, options);
+        this.name = 'ConfigurationError';
+    }
+}
+
+/**
  * Raised when an iteration of a scenario worker fails. Carries the scenario
  * name, the worker index and the iteration so the caller knows exactly where
  * the failure happened.
