@@ -1,8 +1,7 @@
 name: Yaml-pptr CI
 
-permissions: 
-   contents: read
-   packages: read
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:
@@ -14,7 +13,6 @@ on:
       - '**.txt'
       - '.gitignore'
       - 'LICENSE'
-      - '.github/**'
   pull_request:
     branches: [ main ]
     types: [opened, synchronize, reopened]
@@ -24,7 +22,6 @@ on:
       - '**.txt'
       - '.gitignore'
       - 'LICENSE'
-      - '.github/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -34,32 +31,33 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Supported Node.js release lines (Puppeteer requires >= 22.12)
+        node-version: ['22.x', '24.x', '26.x']
+
     env:
-      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CI: true
-      
+      # Tests use mocked browsers: no need to download Chrome
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: '21.x'
+          node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@bloom-perf'
-           
+
       - name: Install dependencies
         run: npm ci
-        
-      - name: Build Typescript
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build
         run: npm run build
-        
-      - name: Run Tests
-        run: npm run test
-        
-      - name: NYC Coverage Report
-        if: always()  # S'exécute même si les tests échouent
-        continue-on-error: true
-        run: |
-          npm run test:coverage
-          npx nyc report --reporter=text-summary
+
+      - name: Test with coverage
+        run: npm run test:coverage

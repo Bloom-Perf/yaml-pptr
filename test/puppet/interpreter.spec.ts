@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { evalScenario } from '../../src/puppet/interpreter';
-import { ActionType, Scenario, Action, ScenarioContext } from '../../src/core/model';
-import { WorkerError } from '../../src/core/errors';
+import { evalScenario } from '../../src/puppet/interpreter.js';
+import { ActionType, Scenario, Action, ScenarioContext } from '../../src/core/model.js';
+import { WorkerError } from '../../src/core/errors.js';
 
 describe('Interpreter', () => {
     // Track all method calls for assertions

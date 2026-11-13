@@ -108,7 +108,7 @@ readYamlAndInterpret(yaml)
 ### 3. Run it
 
 ```bash
-npx ts-node src/runner.ts
+npx tsx src/runner.ts
 ```
 
 ## API Options
@@ -329,7 +329,7 @@ location: "$BASE_URL"
 ```
 
 ```bash
-BASE_URL=https://example.com npx ts-node runner.ts
+BASE_URL=https://example.com npx tsx runner.ts
 ```
 
 ### Indexed Variables
@@ -346,7 +346,7 @@ scenarios:
 ```
 
 ```bash
-URLS="https://site1.com,https://site2.com,https://site3.com" npx ts-node runner.ts
+URLS="https://site1.com,https://site2.com,https://site3.com" npx tsx runner.ts
 ```
 
 Worker 0 gets `site1.com`, worker 1 gets `site2.com`, etc.
@@ -375,6 +375,9 @@ npm test
 
 # Run tests with coverage
 npm run test:coverage
+
+# Type check
+npm run typecheck
 
 # Build
 npm run build

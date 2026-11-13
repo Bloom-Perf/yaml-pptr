@@ -1,24 +1,25 @@
 {
   "include": [
     "src/**/*",
-    "test/**/*"
+    "test/**/*",
+    "examples/**/*"
   ],
   "compilerOptions": {
-    "module": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "target": "esnext",
     "lib": [
       "dom",
       "dom.iterable",
       "esnext"
     ],
-    "declaration": true,
+    "types": [
+      "node",
+      "mocha"
+    ],
     "strict": true,
-    "moduleResolution": "node",
-    "jsx": "react",
+    "isolatedModules": true,
     "skipLibCheck": true,
-    "esModuleInterop": true,
-    "emitDeclarationOnly": true,
-    "strictNullChecks": true,
-    "outDir": "dist"
+    "noEmit": true
   }
 }

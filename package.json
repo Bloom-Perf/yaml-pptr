@@ -8,21 +8,20 @@
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "devDependencies": {
-    "@testdeck/mocha": "0.3.3",
     "@types/chai": "5.2.3",
-    "@types/js-yaml": "4.0.9",
     "@types/mocha": "10.0.10",
+    "@types/node": "22.20.5",
     "c8": "12.0.0",
     "chai": "6.3.0",
-    "cross-env": "10.1.0",
     "esbuild": "0.28.2",
     "esbuild-node-externals": "2.0.0",
     "mocha": "11.8.0",
     "prettier": "3.9.10",
     "puppeteer": "25.17.0",
-    "ts-mockito": "2.6.1",
-    "ts-node": "10.9.2",
     "tsx": "4.23.15",
     "typescript": "5.9.3"
   },
@@ -32,8 +31,9 @@
   },
   "scripts": {
     "build": "rm -rf dist && node esbuild.js && tsc -p tsconfig.build.json",
-    "test": "mocha --loader ts-node/esm -r ts-node/register test/**/*.spec.ts",
-    "test:coverage": "c8 npm run test",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "mocha",
+    "test:coverage": "c8 mocha",
     "example:login": "tsx examples/login-demo/run.ts",
     "example:load": "tsx examples/load-test/run.ts"
   },
