@@ -48,5 +48,7 @@ YAML string → parseYaml() → Resolver.resolve() → evalScenario() → Puppet
 **Execution model:**
 - Each scenario can have multiple workers running in parallel
 - Workers can start with a delay (`PARALLEL` with `initialDelaySeconds`) or staggered (`SEQUENTIAL` with delay between workers)
-- Each worker runs the scenario for the configured number of iterations
+- Each worker runs the scenario for the configured number of iterations; the start delay is applied once per worker, before its first iteration
+- Each iteration runs in a fresh page that is always closed afterwards; a failed iteration does not stop the next iterations nor the other workers, and failures are reported at the end as an `AggregateError` of `WorkerError` (`scenarioName`, `workerIndex`, `iteration`)
+- Waits (`wait`, `WAIT`, `WAIT_FOR_TIMEOUT`) run on the Node side, not inside the page, so they survive navigations
 - Supports Chrome and Firefox browsers

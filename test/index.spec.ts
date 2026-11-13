@@ -19,6 +19,7 @@ describe("Integration tests", () => {
         },
         async newPage() {
             console.log(`-> newPage`);
+            let closed = false;
             return Promise.resolve({
                 async goto(str: string) {
                     console.log(`-> goto ${str}`);
@@ -37,15 +38,18 @@ describe("Integration tests", () => {
                     return Promise.resolve();
                 },
                 async evaluate() {
-                    // Mock evaluate - used by wait action
                     calls.push({ method: 'evaluate', args: [] });
                     return Promise.resolve();
                 },
                 async close() {
                     console.log(`-> close`);
+                    closed = true;
                     calls.push({ method: 'close', args: [] });
                     return Promise.resolve();
-                }
+                },
+                isClosed() {
+                    return closed;
+                },
             });
         },
     } as any);
@@ -101,20 +105,22 @@ scenarios:
         expect(mockedBrowser.gotos()["http://noop.com"]).to.equal(1);
     });
 
-    it("wait 1s", async () => {
-        const mockedBrowser = createMockedBrowser();
+    it("wait step (in seconds) really waits, on the Node side", async () => {
+        const calls: CallLog[] = [];
+        const mockedBrowser = createMockedBrowser({}, calls);
 
         const yamlContent = `
 scenarios:
     - iterations: 1
       location: "http://example.com/page1"
       steps:
-        - wait: 1`;
+        - wait: 0.1`;
 
-        // Appeler readYamlAndInterpret avec le mapping du navigateur
+        const start = Date.now();
         await readYamlAndInterpret(yamlContent, { browsers: { chrome: mockedBrowser } });
 
-        // Vous pouvez ajouter des assertions spécifiques si nécessaire
+        expect(Date.now() - start).to.be.at.least(95);
+        expect(calls.filter(c => c.method === 'evaluate')).to.have.lengthOf(0);
     });
 
     it("click step", async () => {
@@ -180,18 +186,20 @@ scenarios:
             selector: "#password"
             text: "password123"
         - click: "#login-button"
-        - wait: 1`;
+        - wait: 0.05`;
 
         await readYamlAndInterpret(yamlContent, { browsers: { chrome: mockedBrowser } });
 
-        // Verify the sequence of calls
-        const actionCalls = calls.filter(c => ['goto', 'type', 'click', 'evaluate'].includes(c.method));
+        // Verify the sequence of calls (the wait step does not touch the page)
+        const actionCalls = calls.filter(c => ['goto', 'type', 'click', 'evaluate', 'close'].includes(c.method));
 
-        expect(actionCalls[0]).to.deep.equal({ method: 'goto', args: ['http://example.com/login'] });
-        expect(actionCalls[1]).to.deep.equal({ method: 'type', args: ['#username', 'admin'] });
-        expect(actionCalls[2]).to.deep.equal({ method: 'type', args: ['#password', 'password123'] });
-        expect(actionCalls[3]).to.deep.equal({ method: 'click', args: ['#login-button'] });
-        expect(actionCalls[4].method).to.equal('evaluate'); // wait action uses evaluate
+        expect(actionCalls).to.deep.equal([
+            { method: 'goto', args: ['http://example.com/login'] },
+            { method: 'type', args: ['#username', 'admin'] },
+            { method: 'type', args: ['#password', 'password123'] },
+            { method: 'click', args: ['#login-button'] },
+            { method: 'close', args: [] },
+        ]);
     });
 
     it("onPage callback receives correct context through full stack", async () => {
@@ -229,12 +237,18 @@ scenarios:
     describe("error propagation", () => {
         const failingBrowser = (failingUrl: string, visited: string[]) => ({
             async newPage() {
+                let closed = false;
                 return {
                     async goto(url: string) {
                         visited.push(url);
                         if (url === failingUrl) throw new Error(`cannot reach ${url}`);
                     },
-                    async close() {},
+                    async close() {
+                        closed = true;
+                    },
+                    isClosed() {
+                        return closed;
+                    },
                 };
             },
         } as any);
@@ -266,6 +280,7 @@ scenarios:
             errors.forEach(err => {
                 expect(err).to.be.instanceOf(WorkerError);
                 expect(err.scenarioName).to.equal("Broken");
+                expect(err.iteration).to.equal(0);
             });
             expect(errors.map(e => e.workerIndex)).to.deep.equal([0, 1]);
         });
