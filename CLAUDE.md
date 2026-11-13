@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm test                # Run all tests with mocha (TypeScript loaded through tsx)
 npm run test:coverage   # Run tests with coverage via c8
 npm run typecheck       # Type-check src, test and examples (no emit)
-npm run build           # Build with esbuild + tsc (outputs to dist/)
+npm run build           # Build with esbuild + tsc, then generate dist/schema.json (outputs to dist/)
 ```
 
 To run a single test file:
@@ -36,6 +36,9 @@ YAML string → parseYaml() → Resolver.resolve() → evalScenario() → Puppet
 - `src/yaml/validator.ts` - Strict zod schemas (unknown keys are rejected) defining the YAML structure. Two ways to define actions:
   - `steps`: Simple shorthand syntax (`wait`, `navigate`, `waitForever`, `click`, `input`), full actions accepted too so both syntaxes can be mixed in order
   - `actions`: Full action objects with type discriminator (`GOTO`, `CLICK`, `TYPE`, etc.), run after `steps`
+  - `.describe()` texts end up in the JSON Schema shown by editors on hover
+
+- `src/yaml/json-schema.ts` - Generates the JSON Schema (`z.toJSONSchema`) published as `dist/schema.json` by `scripts/generate-schema.ts` (build step). `test/yaml/json-schema.spec.ts` checks it agrees with zod (ajv): extend its corpus when adding keys or actions.
 
 - `src/yaml/resolver.ts` - Transforms validated YAML into domain model. Handles environment variable resolution (errors become `ConfigurationError`, resolved values are never logged):
   - `${VAR_NAME}` - Interpolation anywhere in URLs, selectors, typed texts, screenshot paths (`$${` = literal `${`); never in EVALUATE scripts
