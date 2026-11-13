@@ -29,6 +29,9 @@
     "js-yaml": "^5.0.0",
     "zod": "^4.0.0"
   },
+  "peerDependencies": {
+    "puppeteer": "^25.0.0"
+  },
   "scripts": {
     "build": "rm -rf dist && node esbuild.js && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",

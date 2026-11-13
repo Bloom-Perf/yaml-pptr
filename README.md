@@ -11,8 +11,10 @@
 ## Installation
 
 ```bash
-npm install @bloom-perf/yaml-pptr
+npm install @bloom-perf/yaml-pptr puppeteer
 ```
+
+`puppeteer` is a peer dependency (`^25.0.0`): your project controls its version.
 
 ## Quick Start
 
@@ -145,9 +147,9 @@ To use another Firefox installed on the machine, pass its path with `launchOptio
 
 ### Error handling
 
-Every scenario and every worker always runs to completion. If anything failed, `readYamlAndInterpret` then rejects with an `AggregateError` whose `errors` contain:
+Every scenario, worker and iteration always runs to completion: a failed iteration does not stop the next iterations nor the other workers, and its page is always closed. If anything failed, `readYamlAndInterpret` then rejects with an `AggregateError` whose `errors` contain:
 
-- `WorkerError` — a worker failed (`scenarioName`, `workerIndex`, original error in `cause`)
+- `WorkerError` — an iteration failed (`scenarioName`, `workerIndex`, `iteration`, original error in `cause`)
 - `BrowserLaunchError` — a browser could not be launched (`browser`, original error in `cause`)
 
 ```typescript
@@ -171,8 +173,8 @@ try {
 | -------- | ---- | ------- | ----------- |
 | `name` | string | `Scenario N` | Scenario name |
 | `browser` | `chrome` \| `firefox` | `chrome` | Browser to use |
-| `run` | `PARALLEL` \| `SEQUENTIAL` | `PARALLEL` | Worker start strategy |
-| `initialDelaySeconds` | number | `0` | Delay before starting |
+| `run` | `PARALLEL` \| `SEQUENTIAL` | `PARALLEL` | Worker start strategy: `PARALLEL` starts all workers after `initialDelaySeconds`; `SEQUENTIAL` starts worker *n* after *n* × `initialDelaySeconds` |
+| `initialDelaySeconds` | number | `0` | Start delay, applied once per worker before its first iteration (see `run`) |
 | `workers` | number | `1` | Number of parallel workers |
 | `iterations` | number | `1` | Repetitions per worker |
 | `location` | string | - | Starting URL |

@@ -1,4 +1,5 @@
 import * as p from 'puppeteer';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { YpLogger, dumbLogger } from '../core/logger.js';
 import { WorkerError } from '../core/errors.js';
 import {
@@ -9,6 +10,7 @@ import {
     GotoAction,
     NavigateAction,
     OnPageCallback,
+    Run,
     Scenario,
     ScreenshotAction,
     SetViewportAction,
@@ -17,9 +19,6 @@ import {
     WaitForSelectorAction,
     WaitForTimeoutAction
 } from '../core/model.js';
-
-type LoadEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
-type MouseButton = 'left' | 'right' | 'middle';
 
 function ensureCorrectExtension(path: string, type?: 'png' | 'jpeg' | 'webp'): `${string}.png` | `${string}.jpeg` | `${string}.webp` {
     const detectedType = type || 'png';
@@ -34,61 +33,74 @@ function ensureCorrectExtension(path: string, type?: 'png' | 'jpeg' | 'webp'): `
 }
 
 /**
- * Runs every worker of the scenario to completion. A failing worker does not
- * interrupt the others; once all workers are done, the promise rejects with an
- * `AggregateError` of `WorkerError` if at least one worker failed.
+ * Start delay of a worker, applied once before its first iteration:
+ * - PARALLEL: every worker waits `initialDelaySeconds`;
+ * - SEQUENTIAL: worker `n` waits `n × delaySecondsBetweenWorkerInits`.
+ */
+const startDelaySeconds = (run: Run, workerIndex: number): number =>
+    'delaySecondsBetweenWorkerInits' in run
+        ? run.delaySecondsBetweenWorkerInits * workerIndex
+        : run.initialDelaySeconds;
+
+/**
+ * Runs every worker of the scenario, each one running all its iterations.
+ * A failing iteration interrupts neither the next iterations of the worker
+ * nor the other workers. Once everything is done, the promise rejects with an
+ * `AggregateError` of `WorkerError` (one per failed iteration) if anything failed.
  */
 export const evalScenario = async (browser: p.Browser, scenario: Scenario, logger: YpLogger = dumbLogger, onPage?: OnPageCallback): Promise<void> => {
-    await evalSafely(scenario.workers, scenario.name, async workerIndex => {
-        for (let i = 0; i < scenario.iterations; i++) {
-
-            const run = scenario.run;
-            if ('delaySecondsBetweenWorkerInits' in run) {
-                logger.info(`Scenario "${scenario.name}" (worker ${workerIndex}) > Choosing SEQUENTIAL start with ${run.delaySecondsBetweenWorkerInits} seconds between workers`);
-                await new Promise(r => setTimeout(r, run.delaySecondsBetweenWorkerInits * workerIndex * 1000));
-            } else {
-                logger.info(`Scenario "${scenario.name}" (worker ${workerIndex}) > Choosing PARALLEL start with ${run.initialDelaySeconds} seconds of initial delay`);
-                await new Promise(r => setTimeout(r, run.initialDelaySeconds * 1000));
-            }
-
-            const page = await browser.newPage();
-
-            if (onPage) {
-                await onPage(page, {
-                    scenarioName: scenario.name,
-                    workerIndex,
-                    iteration: i,
-                });
-            }
-
-            await evalScenarioOnce(scenario.name, scenario.actions, page, workerIndex, logger);
-            await page.close();
-        }
-    }, logger);
-};
-
-const evalSafely = async <T>(nb: number, scenarioName: string, createElement: (index: number) => Promise<T>, logger: YpLogger = dumbLogger): Promise<void> => {
     const errors: WorkerError[] = [];
 
-    await Promise.all(
-        Array.from(
-            { length: nb },
-            async (_, elementIndex) => {
-                try {
-                    logger.info(`Scenario "${scenarioName}" (worker ${elementIndex}) started.`);
-                    await createElement(elementIndex);
-                } catch (e) {
-                    const error = new WorkerError(scenarioName, elementIndex, e);
-                    logger.error(error.message);
-                    errors.push(error);
-                }
+    const runWorker = async (workerIndex: number): Promise<void> => {
+        const delay = startDelaySeconds(scenario.run, workerIndex);
+        const strategy = 'delaySecondsBetweenWorkerInits' in scenario.run ? 'SEQUENTIAL' : 'PARALLEL';
+        logger.info(`Scenario "${scenario.name}" (worker ${workerIndex}) started (${strategy}, starting in ${delay}s).`);
+        await sleep(delay * 1000);
+
+        for (let iteration = 0; iteration < scenario.iterations; iteration++) {
+            try {
+                await runIteration(browser, scenario, workerIndex, iteration, logger, onPage);
+            } catch (e) {
+                const error = new WorkerError(scenario.name, workerIndex, iteration, e);
+                logger.error(error.message);
+                errors.push(error);
             }
-        )
-    );
+        }
+    };
+
+    await Promise.all(Array.from({ length: scenario.workers }, (_, workerIndex) => runWorker(workerIndex)));
 
     if (errors.length > 0) {
-        errors.sort((a, b) => a.workerIndex - b.workerIndex);
-        throw new AggregateError(errors, `Scenario "${scenarioName}": ${errors.length}/${nb} worker(s) failed`);
+        errors.sort((a, b) => a.workerIndex - b.workerIndex || a.iteration - b.iteration);
+        const total = scenario.workers * scenario.iterations;
+        throw new AggregateError(errors, `Scenario "${scenario.name}": ${errors.length}/${total} iteration(s) failed`);
+    }
+};
+
+/**
+ * Runs one iteration in a fresh page. The page is always closed afterwards,
+ * whether the iteration succeeded or not (unless a CLOSE action already did it).
+ */
+const runIteration = async (browser: p.Browser, scenario: Scenario, workerIndex: number, iteration: number, logger: YpLogger, onPage?: OnPageCallback): Promise<void> => {
+    let page: p.Page | undefined;
+    try {
+        page = await browser.newPage();
+
+        if (onPage) {
+            await onPage(page, {
+                scenarioName: scenario.name,
+                workerIndex,
+                iteration,
+            });
+        }
+
+        await evalScenarioOnce(scenario.name, scenario.actions, page, workerIndex, logger);
+    } finally {
+        if (page && !page.isClosed()) {
+            await page.close().catch(e =>
+                logger.warn(`Scenario "${scenario.name}" (worker ${workerIndex}, iteration ${iteration}) > failed to close page: ${e}`)
+            );
+        }
     }
 };
 
@@ -110,12 +122,12 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
             case ActionType.Wait:
                 const waitAction = action as WaitAction;
                 logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > Waiting ${waitAction.milliseconds} milliseconds...`);
-                await page.evaluate((ms) => new Promise(resolve => setTimeout(resolve, ms)), waitAction.milliseconds);
+                await sleep(waitAction.milliseconds);
                 break;
             case ActionType.WaitForever:
                 logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > Waiting forever...`);
                 while (true) {
-                    await new Promise(r => setTimeout(r, 3600 * 1000));
+                    await sleep(3600 * 1000);
                 }
                 break;
             case ActionType.Goto:
@@ -151,7 +163,7 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
             case ActionType.WaitForTimeout:
                 const waitForTimeoutAction = action as WaitForTimeoutAction;
                 logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > WAIT_FOR_TIMEOUT ${waitForTimeoutAction.timeout} milliseconds`);
-                await page.evaluate((ms) => new Promise(resolve => setTimeout(resolve, ms)), waitForTimeoutAction.timeout);
+                await sleep(waitForTimeoutAction.timeout);
                 break;
             case ActionType.Pause:
                 logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > PAUSE, press Enter to continue...`);
