@@ -2,7 +2,8 @@
   "include": [
     "src/**/*",
     "test/**/*",
-    "examples/**/*"
+    "examples/**/*",
+    "scripts/**/*"
   ],
   "compilerOptions": {
     "module": "nodenext",

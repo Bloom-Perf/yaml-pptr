@@ -177,6 +177,28 @@ try {
 }
 ```
 
+## Editor Support
+
+The package ships a JSON Schema of the YAML configuration (`dist/schema.json`), generated from the very schema used to validate it at runtime. With the [YAML extension for VS Code](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-yaml) (or any editor using `yaml-language-server`), you get completion, documentation on hover, and errors (unknown key, wrong type...) while typing.
+
+Add this first line to a scenario file:
+
+```yaml
+# yaml-language-server: $schema=https://unpkg.com/@bloom-perf/yaml-pptr@3/dist/schema.json
+scenarios:
+  - name: Login
+```
+
+With the package installed, a local path works too (relative to the YAML file), e.g. `$schema=../node_modules/@bloom-perf/yaml-pptr/dist/schema.json`. To apply it to several files, map them in `.vscode/settings.json`:
+
+```json
+{
+  "yaml.schemas": {
+    "https://unpkg.com/@bloom-perf/yaml-pptr@3/dist/schema.json": ["scenarios/*.yaml"]
+  }
+}
+```
+
 ## YAML Reference
 
 ### Scenario Configuration
@@ -194,6 +216,28 @@ try {
 | `actions` | array | - | Full syntax with options, run after `steps` |
 
 All the scenarios of a file start at the same time, whatever their browser: each one is a population of users with its own `workers`, `iterations` and start strategy. Unknown keys are rejected (see [Error handling](#error-handling)).
+
+### Selectors
+
+Every selector (`click`, `input`, `CLICK`, `TYPE`, `WAIT_FOR_SELECTOR`) accepts a CSS selector or any [Puppeteer selector](https://pptr.dev/guides/page-interactions), so XPath, text and ARIA queries need no special syntax:
+
+| Kind | Example |
+| ---- | ------- |
+| CSS | `#login-button`, `form .submit` |
+| XPath | `::-p-xpath(//button[@type='submit'])` or `xpath///button[@type='submit']` |
+| Text | `::-p-text(Sign in)` |
+| ARIA | `::-p-aria(Sign in)`, `::-p-aria([name="Sign in"][role="button"])` |
+| Shadow DOM | `my-app >>> button` (any depth), `my-app >>>> button` (direct shadow root) |
+
+```yaml
+steps:
+  - input:
+      selector: "::-p-xpath(//input[@name='email'])"
+      text: "${APP_USER}"
+  - click: "::-p-text(Sign in)"
+```
+
+`${VAR}` placeholders are resolved in selectors too.
 
 ### Steps (Simplified Syntax)
 
