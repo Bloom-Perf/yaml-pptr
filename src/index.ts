@@ -1,15 +1,15 @@
 // src/index.ts
 import * as p from 'puppeteer';
-import { SupportedBrowser, OnPageCallback, Scenario } from './core/model';
-import { parseYaml } from './yaml/parser';
-import { Resolver } from './yaml/resolver';
-import { evalScenario } from './puppet/interpreter';
-import { launchBrowser } from './puppet/launcher';
-import { YpLogger, dumbLogger } from './core/logger';
-import { BrowserLaunchError } from './core/errors';
+import { SupportedBrowser, OnPageCallback, Scenario } from './core/model.js';
+import { parseYaml } from './yaml/parser.js';
+import { Resolver } from './yaml/resolver.js';
+import { evalScenario } from './puppet/interpreter.js';
+import { launchBrowser } from './puppet/launcher.js';
+import { YpLogger, dumbLogger } from './core/logger.js';
+import { BrowserLaunchError } from './core/errors.js';
 
-export type { ScenarioContext, OnPageCallback } from './core/model';
-export { WorkerError, BrowserLaunchError } from './core/errors';
+export type { ScenarioContext, OnPageCallback } from './core/model.js';
+export { WorkerError, BrowserLaunchError } from './core/errors.js';
 
 export type ReadYamlOptions = {
     /** Already launched browsers to use instead of launching new ones. They are not closed. */

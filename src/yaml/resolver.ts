@@ -1,4 +1,4 @@
-import { YpLogger, dumbLogger } from '../core/logger';
+import { YpLogger, dumbLogger } from '../core/logger.js';
 import {
     Action,
     ActionType,
@@ -19,8 +19,8 @@ import {
     CloseAction,
     Run,
     SupportedBrowser,
-} from '../core/model';
-import { RootYaml, ScenarioYaml, ActionYaml, StepYaml } from './validator';
+} from '../core/model.js';
+import { RootYaml, ScenarioYaml, ActionYaml, StepYaml } from './validator.js';
 
 type EnvVarResolve = (arg: string) => string;
 

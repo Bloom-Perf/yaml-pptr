@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { buildLaunchOptions } from '../../src/puppet/launcher';
+import { buildLaunchOptions } from '../../src/puppet/launcher.js';
 
 describe('Launcher', () => {
     it('selects Firefox with the `browser` option, not `channel`', () => {

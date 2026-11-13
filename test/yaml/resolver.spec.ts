@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { Resolver } from "../../src/yaml/resolver"
-import { RootYaml } from '../../src/yaml/validator';
-import { ActionType, SupportedBrowser } from '../../src/core/model';
+import { Resolver } from "../../src/yaml/resolver.js"
+import { RootYaml } from '../../src/yaml/validator.js';
+import { ActionType, SupportedBrowser } from '../../src/core/model.js';
 
 describe("Yaml Resolver", () => {
 

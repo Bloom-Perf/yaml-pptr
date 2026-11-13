@@ -1,7 +1,7 @@
 // test/index.spec.ts
 import { expect } from 'chai';
-import { readYamlAndInterpret, WorkerError, BrowserLaunchError } from "../src/index";
-import { ScenarioContext } from "../src/core/model";
+import { readYamlAndInterpret, WorkerError, BrowserLaunchError } from "../src/index.js";
+import { ScenarioContext } from "../src/core/model.js";
 
 interface CallLog {
     method: string;

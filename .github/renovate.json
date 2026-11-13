@@ -11,6 +11,11 @@
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
+    },
+    {
+      "description": "Keep @types/node on the minimum supported Node.js line (see engines)",
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<23"
     }
   ],
   "platformCommit": "enabled",

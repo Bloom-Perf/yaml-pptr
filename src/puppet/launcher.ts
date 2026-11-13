@@ -1,5 +1,5 @@
 import * as p from 'puppeteer';
-import { SupportedBrowser } from '../core/model';
+import { SupportedBrowser } from '../core/model.js';
 
 const defaultArgs = (browser: SupportedBrowser, headless: boolean): string[] => {
     if (browser === 'firefox') {

@@ -5,15 +5,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm test                # Run all tests with mocha
-npm run test:coverage   # Run tests with coverage via nyc
+npm test                # Run all tests with mocha (TypeScript loaded through tsx)
+npm run test:coverage   # Run tests with coverage via c8
+npm run typecheck       # Type-check src, test and examples (no emit)
 npm run build           # Build with esbuild + tsc (outputs to dist/)
 ```
 
 To run a single test file:
 ```bash
-npx mocha --loader ts-node/esm -r ts-node/register test/yaml/parser.spec.ts
+npx mocha test/yaml/parser.spec.ts
 ```
+
+Relative imports use explicit `.js` extensions (`moduleResolution: nodenext`), e.g. `import { parseYaml } from './yaml/parser.js'`.
 
 ## Architecture
 

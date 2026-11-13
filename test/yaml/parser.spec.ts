@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { parseYaml } from "../../src/yaml/parser"
+import { parseYaml } from "../../src/yaml/parser.js"
 
 describe("Yaml Parser", () => {
   it("parses basic", () => {

@@ -1,6 +1,6 @@
 import * as p from 'puppeteer';
-import { YpLogger, dumbLogger } from '../core/logger';
-import { WorkerError } from '../core/errors';
+import { YpLogger, dumbLogger } from '../core/logger.js';
+import { WorkerError } from '../core/errors.js';
 import {
     Action,
     ActionType,
@@ -16,7 +16,7 @@ import {
     WaitAction,
     WaitForSelectorAction,
     WaitForTimeoutAction
-} from '../core/model';
+} from '../core/model.js';
 
 type LoadEvent = 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2';
 type MouseButton = 'left' | 'right' | 'middle';
