@@ -125,7 +125,7 @@ export class Resolver {
             case 'WAIT':
                 return {
                     actionType: ActionType.Wait,
-                    milliseconds: actionYaml.milliseconds * 1000,
+                    milliseconds: actionYaml.milliseconds,
                 } as WaitAction;
             case 'CLICK':
                 return {

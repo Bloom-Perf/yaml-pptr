@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { evalScenario } from '../../src/puppet/interpreter';
 import { ActionType, Scenario, Action, ScenarioContext } from '../../src/core/model';
+import { WorkerError } from '../../src/core/errors';
 
 describe('Interpreter', () => {
     // Track all method calls for assertions
@@ -546,11 +547,33 @@ describe('Interpreter', () => {
                 { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
             ], { workers: 3 });
 
-            // Should not throw, errors are caught per worker
-            await evalScenario(browser, scenario);
+            let caught: unknown;
+            try {
+                await evalScenario(browser, scenario);
+            } catch (e) {
+                caught = e;
+            }
 
-            // All 3 workers attempted
+            // All 3 workers attempted despite the failure
             expect(callCount).to.equal(3);
+
+            // ...and the failure is reported once every worker is done
+            expect(caught).to.be.instanceOf(AggregateError);
+            const errors = (caught as AggregateError).errors;
+            expect(errors).to.have.lengthOf(1);
+            expect(errors[0]).to.be.instanceOf(WorkerError);
+            expect(errors[0].scenarioName).to.equal('Test Scenario');
+            expect(errors[0].workerIndex).to.equal(0);
+            expect(errors[0].cause.message).to.equal('First worker fails');
+        });
+
+        it('resolves when every worker succeeds', async () => {
+            const browser = createMockBrowser();
+            const scenario = createScenario([
+                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
+            ], { workers: 3 });
+
+            await evalScenario(browser, scenario);
         });
     });
 });

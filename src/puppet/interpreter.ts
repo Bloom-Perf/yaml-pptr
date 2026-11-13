@@ -1,5 +1,6 @@
 import * as p from 'puppeteer';
 import { YpLogger, dumbLogger } from '../core/logger';
+import { WorkerError } from '../core/errors';
 import {
     Action,
     ActionType,
@@ -32,8 +33,13 @@ function ensureCorrectExtension(path: string, type?: 'png' | 'jpeg' | 'webp'): `
     return `${path}.${detectedType}` as `${string}.png` | `${string}.jpeg` | `${string}.webp`;
 }
 
-export const evalScenario = async (browser: p.Browser, scenario: Scenario, logger: YpLogger = dumbLogger, onPage?: OnPageCallback): Promise<void[]> => {
-    return await evalSafely(scenario.workers, scenario.name, async workerIndex => {
+/**
+ * Runs every worker of the scenario to completion. A failing worker does not
+ * interrupt the others; once all workers are done, the promise rejects with an
+ * `AggregateError` of `WorkerError` if at least one worker failed.
+ */
+export const evalScenario = async (browser: p.Browser, scenario: Scenario, logger: YpLogger = dumbLogger, onPage?: OnPageCallback): Promise<void> => {
+    await evalSafely(scenario.workers, scenario.name, async workerIndex => {
         for (let i = 0; i < scenario.iterations; i++) {
 
             const run = scenario.run;
@@ -61,8 +67,10 @@ export const evalScenario = async (browser: p.Browser, scenario: Scenario, logge
     }, logger);
 };
 
-const evalSafely = async <T>(nb: number, scenarioName: string, createElement: (index: number) => Promise<T>, logger: YpLogger = dumbLogger): Promise<void[]> =>
-    Promise.all(
+const evalSafely = async <T>(nb: number, scenarioName: string, createElement: (index: number) => Promise<T>, logger: YpLogger = dumbLogger): Promise<void> => {
+    const errors: WorkerError[] = [];
+
+    await Promise.all(
         Array.from(
             { length: nb },
             async (_, elementIndex) => {
@@ -70,11 +78,19 @@ const evalSafely = async <T>(nb: number, scenarioName: string, createElement: (i
                     logger.info(`Scenario "${scenarioName}" (worker ${elementIndex}) started.`);
                     await createElement(elementIndex);
                 } catch (e) {
-                    logger.error(`Scenario ${scenarioName} (worker ${elementIndex}) failed: ${e}`);
+                    const error = new WorkerError(scenarioName, elementIndex, e);
+                    logger.error(error.message);
+                    errors.push(error);
                 }
             }
         )
     );
+
+    if (errors.length > 0) {
+        errors.sort((a, b) => a.workerIndex - b.workerIndex);
+        throw new AggregateError(errors, `Scenario "${scenarioName}": ${errors.length}/${nb} worker(s) failed`);
+    }
+};
 
 const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p.Page, workerIndex: number, logger: YpLogger = dumbLogger) => {
 

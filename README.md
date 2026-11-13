@@ -111,6 +111,58 @@ readYamlAndInterpret(yaml)
 npx ts-node src/runner.ts
 ```
 
+## API Options
+
+```typescript
+await readYamlAndInterpret(yaml, {
+  headless: true,          // default: true
+  launchOptions: {         // extra Puppeteer launch options, per browser
+    firefox: { executablePath: '/path/to/firefox' },
+  },
+  browsers: { chrome: myBrowser }, // reuse already launched browsers (not closed)
+  logger: myLogger,
+  onPage: async (page, ctx) => { /* page hook */ },
+});
+```
+
+| Option | Default | Description |
+| ------ | ------- | ----------- |
+| `headless` | `true` | Run launched browsers headless |
+| `launchOptions` | `{}` | Puppeteer `LaunchOptions` per browser; `args` are appended to the defaults |
+| `browsers` | `{}` | Pre-launched browsers to use instead of launching new ones |
+| `logger` | console | Custom logger (`debug`, `info`, `warn`, `error`) |
+| `onPage` | - | Callback invoked on every new page with `{ scenarioName, workerIndex, iteration }` |
+
+### Firefox
+
+Puppeteer drives Firefox through WebDriver BiDi, which requires a recent Firefox. Install the version matching your Puppeteer release with:
+
+```bash
+npx puppeteer browsers install firefox
+```
+
+To use another Firefox installed on the machine, pass its path with `launchOptions.firefox.executablePath`.
+
+### Error handling
+
+Every scenario and every worker always runs to completion. If anything failed, `readYamlAndInterpret` then rejects with an `AggregateError` whose `errors` contain:
+
+- `WorkerError` — a worker failed (`scenarioName`, `workerIndex`, original error in `cause`)
+- `BrowserLaunchError` — a browser could not be launched (`browser`, original error in `cause`)
+
+```typescript
+import { readYamlAndInterpret, WorkerError } from '@bloom-perf/yaml-pptr';
+
+try {
+  await readYamlAndInterpret(yaml);
+} catch (e) {
+  if (e instanceof AggregateError) {
+    for (const err of e.errors) console.error(err.message);
+  }
+  process.exit(1);
+}
+```
+
 ## YAML Reference
 
 ### Scenario Configuration
