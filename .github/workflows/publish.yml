@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # npm Trusted Publishing (OIDC): no npm token needed; also signs provenance
       id-token: write
     env:
       # Tests use mocked browsers: no need to download Chrome
@@ -22,5 +23,3 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
