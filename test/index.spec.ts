@@ -1,6 +1,6 @@
 // test/index.spec.ts
 import { expect } from 'chai';
-import { readYamlAndInterpret } from "../src/index";
+import { readYamlAndInterpret, WorkerError, BrowserLaunchError } from "../src/index";
 import { ScenarioContext } from "../src/core/model";
 
 interface CallLog {
@@ -224,5 +224,76 @@ scenarios:
         const worker1 = contexts.filter(c => c.workerIndex === 1);
         expect(worker0.map(c => c.iteration)).to.include.members([0, 1]);
         expect(worker1.map(c => c.iteration)).to.include.members([0, 1]);
+    });
+
+    describe("error propagation", () => {
+        const failingBrowser = (failingUrl: string, visited: string[]) => ({
+            async newPage() {
+                return {
+                    async goto(url: string) {
+                        visited.push(url);
+                        if (url === failingUrl) throw new Error(`cannot reach ${url}`);
+                    },
+                    async close() {},
+                };
+            },
+        } as any);
+
+        it("rejects with WorkerError details while still running every scenario", async () => {
+            const visited: string[] = [];
+
+            const yamlContent = `
+scenarios:
+    - name: Broken
+      workers: 2
+      location: "http://broken.com"
+    - name: Healthy
+      location: "http://ok.com"`;
+
+            let caught: unknown;
+            try {
+                await readYamlAndInterpret(yamlContent, { browsers: { chrome: failingBrowser("http://broken.com", visited) } });
+            } catch (e) {
+                caught = e;
+            }
+
+            // The healthy scenario ran even though the first one failed
+            expect(visited).to.include("http://ok.com");
+
+            expect(caught).to.be.instanceOf(AggregateError);
+            const errors = (caught as AggregateError).errors;
+            expect(errors).to.have.lengthOf(2);
+            errors.forEach(err => {
+                expect(err).to.be.instanceOf(WorkerError);
+                expect(err.scenarioName).to.equal("Broken");
+            });
+            expect(errors.map(e => e.workerIndex)).to.deep.equal([0, 1]);
+        });
+
+        it("resolves when every scenario succeeds", async () => {
+            await readYamlAndInterpret(`
+scenarios:
+    - location: "http://ok.com"`, { browsers: { chrome: failingBrowser("http://never.com", []) } });
+        });
+
+        it("rejects with BrowserLaunchError when the browser cannot be launched", async () => {
+            let caught: unknown;
+            try {
+                await readYamlAndInterpret(`
+scenarios:
+    - browser: firefox
+      location: "http://ok.com"`, {
+                    launchOptions: { firefox: { executablePath: "/nonexistent/firefox-binary" } },
+                });
+            } catch (e) {
+                caught = e;
+            }
+
+            expect(caught).to.be.instanceOf(AggregateError);
+            const errors = (caught as AggregateError).errors;
+            expect(errors).to.have.lengthOf(1);
+            expect(errors[0]).to.be.instanceOf(BrowserLaunchError);
+            expect(errors[0].browser).to.equal("firefox");
+        });
     });
 });

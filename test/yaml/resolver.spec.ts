@@ -224,4 +224,25 @@ describe("Yaml Resolver", () => {
             text: "testuser"
         });
     });
+
+    it("resolves WAIT action milliseconds as-is (no seconds conversion)", () => {
+        const resolver = new Resolver(v => "")
+
+        const yaml: RootYaml = {
+            scenarios: [
+                {
+                    actions: [
+                        { type: "WAIT", milliseconds: 2000 }
+                    ]
+                }
+            ]
+        }
+
+        const core = resolver.resolve(yaml);
+
+        expect(core.scenarios[0].actions[0]).to.deep.equal({
+            actionType: ActionType.Wait,
+            milliseconds: 2000
+        });
+    });
 });

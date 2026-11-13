@@ -1,26 +1,41 @@
 // src/index.ts
 import * as p from 'puppeteer';
-import { SupportedBrowser, OnPageCallback } from './core/model';
+import { SupportedBrowser, OnPageCallback, Scenario } from './core/model';
 import { parseYaml } from './yaml/parser';
 import { Resolver } from './yaml/resolver';
 import { evalScenario } from './puppet/interpreter';
+import { launchBrowser } from './puppet/launcher';
 import { YpLogger, dumbLogger } from './core/logger';
+import { BrowserLaunchError } from './core/errors';
 
 export type { ScenarioContext, OnPageCallback } from './core/model';
+export { WorkerError, BrowserLaunchError } from './core/errors';
 
 export type ReadYamlOptions = {
+    /** Already launched browsers to use instead of launching new ones. They are not closed. */
     browsers?: { [key in SupportedBrowser]?: p.Browser };
     logger?: YpLogger;
     onPage?: OnPageCallback;
+    /** Run launched browsers in headless mode. Defaults to `true`. */
+    headless?: boolean;
+    /** Extra Puppeteer launch options per browser (e.g. `executablePath`). `args` are appended to the defaults. */
+    launchOptions?: { [key in SupportedBrowser]?: p.LaunchOptions };
 };
 
+/**
+ * Parses the YAML, then runs every scenario. Scenarios targeting different
+ * browsers run in parallel; scenarios sharing a browser run one after another.
+ *
+ * All scenarios are always run to completion. If anything failed (browser
+ * launch or worker), the promise rejects with an `AggregateError` whose
+ * `errors` are `BrowserLaunchError` / `WorkerError` instances.
+ */
 export const readYamlAndInterpret = async (
     yamlContent: string,
     options: ReadYamlOptions = {}
 ): Promise<void> => {
-    const { browsers = {}, logger = dumbLogger, onPage } = options;
+    const { browsers = {}, logger = dumbLogger, onPage, headless = true, launchOptions = {} } = options;
 
-    // Analyse et résolution du YAML
     const rootYaml = parseYaml(yamlContent);
 
     const domainResolver = new Resolver((envVarName: string) => {
@@ -34,70 +49,49 @@ export const readYamlAndInterpret = async (
 
     const root = domainResolver.resolve(rootYaml);
 
-    // Grouper les scénarios par navigateur
-    const scenariosByBrowser: { [key in SupportedBrowser]?: typeof root.scenarios } = {};
+    const scenariosByBrowser = new Map<SupportedBrowser, Scenario[]>();
     for (const scenario of root.scenarios) {
-        const browserName = scenario.browser || 'chrome'; // Défaut à chrome
-        if (!scenariosByBrowser[browserName]) {
-            scenariosByBrowser[browserName] = [];
-        }
-        scenariosByBrowser[browserName]?.push(scenario);
+        const list = scenariosByBrowser.get(scenario.browser) ?? [];
+        list.push(scenario);
+        scenariosByBrowser.set(scenario.browser, list);
     }
 
-    const supportedBrowsers: SupportedBrowser[] = ['chrome', 'firefox'];
+    const errors: unknown[] = [];
 
-    // Lancer les navigateurs et exécuter les scénarios
-    const browserPromises = Object.entries(scenariosByBrowser).map(async ([browserName, scenarios]) => {
-        if (!scenarios) return;
+    const runOnBrowser = async (browserName: SupportedBrowser, scenarios: Scenario[]): Promise<void> => {
+        let browser = browsers[browserName];
+        const shouldClose = !browser;
 
-        if (!supportedBrowsers.includes(browserName as SupportedBrowser)) {
-            console.error(`Navigateur non supporté: ${browserName}. Les navigateurs supportés sont: ${supportedBrowsers.join(', ')}`);
-            return;
-        }
-
-        const browserArgs = [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--disable-gpu',
-            '--ignore-certificate-errors',
-        ];
-
-        if (browserName === 'chrome') {
-            browserArgs.push('--start-maximized');
-        }
-
-        if (browserName === 'firefox') {
-            browserArgs.push('--private');
-        }
-
-        let browser = browsers[browserName as SupportedBrowser];
-        let shouldClose = false;
-
-        // Si aucun navigateur n'est fourni pour ce type, en lancer un nouveau
         if (!browser) {
-            browser = await p.launch({
-                headless: false,
-                channel: browserName as any, // 'chrome' ou 'firefox'
-                acceptInsecureCerts: true,
-                args: browserArgs,
-            });
-            shouldClose = true; // Indiquer que ce navigateur doit être fermé après utilisation
+            try {
+                logger.info(`Launching ${browserName} (headless: ${headless})`);
+                browser = await launchBrowser(browserName, headless, launchOptions[browserName]);
+            } catch (e) {
+                const error = new BrowserLaunchError(browserName, e);
+                logger.error(error.message);
+                errors.push(error);
+                return;
+            }
         }
 
         try {
             for (const scenario of scenarios) {
-                await evalScenario(browser, scenario, logger, onPage);
+                try {
+                    await evalScenario(browser, scenario, logger, onPage);
+                } catch (e) {
+                    errors.push(...(e instanceof AggregateError ? e.errors : [e]));
+                }
             }
-        } catch (error) {
-            console.error(`Erreur lors de l'exécution des scénarios pour ${browserName}:`, error);
         } finally {
-            if (shouldClose && browser) {
-                await browser.close();
+            if (shouldClose) {
+                await browser.close().catch(e => logger.warn(`Failed to close ${browserName}: ${e}`));
             }
         }
-    });
+    };
 
-    await Promise.all(browserPromises);
+    await Promise.all([...scenariosByBrowser].map(([name, scenarios]) => runOnBrowser(name, scenarios)));
+
+    if (errors.length > 0) {
+        throw new AggregateError(errors, `${errors.length} error(s) occurred while running scenarios`);
+    }
 };
