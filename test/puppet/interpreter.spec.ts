@@ -350,6 +350,33 @@ describe('Interpreter', () => {
         });
     });
 
+    describe('Pause action', () => {
+        it('is skipped with a warning when there is no interactive terminal (instead of blocking forever)', async () => {
+            const originalIsTTY = Object.getOwnPropertyDescriptor(process.stdin, 'isTTY');
+            Object.defineProperty(process.stdin, 'isTTY', { value: undefined, configurable: true });
+            try {
+                const warnings: string[] = [];
+                const logger = { debug() {}, info() {}, warn: (m: string) => { warnings.push(m); }, error() {} };
+                const calls: CallLog[] = [];
+
+                await evalScenario(createMockBrowser(calls), createScenario([
+                    { actionType: ActionType.Pause },
+                    { actionType: ActionType.Click, selector: '#next' },
+                ]), logger);
+
+                expect(warnings.some(w => w.includes('PAUSE ignored'))).to.equal(true);
+                // The scenario went on after the PAUSE
+                expect(calls.filter(c => c.method === 'click')).to.have.lengthOf(1);
+            } finally {
+                if (originalIsTTY) {
+                    Object.defineProperty(process.stdin, 'isTTY', originalIsTTY);
+                } else {
+                    delete (process.stdin as { isTTY?: boolean }).isTTY;
+                }
+            }
+        });
+    });
+
     describe('Close action', () => {
         it('closes the page exactly once (no second close by the cleanup)', async () => {
             const calls: CallLog[] = [];

@@ -147,19 +147,31 @@ To use another Firefox installed on the machine, pass its path with `launchOptio
 
 ### Error handling
 
-Every scenario, worker and iteration always runs to completion: a failed iteration does not stop the next iterations nor the other workers, and its page is always closed. If anything failed, `readYamlAndInterpret` then rejects with an `AggregateError` whose `errors` contain:
+The configuration is fully checked before anything runs: YAML syntax, schema (an unknown key such as a typo is an error), and environment variables. If it is invalid, `readYamlAndInterpret` rejects with a `ConfigurationError` listing every problem with its location, and no browser page is opened:
+
+```text
+ConfigurationError: Invalid scenario configuration:
+✖ Unrecognized key: "iteration"
+  → at scenarios[0]
+✖ Invalid input: expected int, received number
+  → at scenarios[0].workers
+```
+
+Then every scenario, worker and iteration always runs to completion: a failed iteration does not stop the next iterations nor the other workers, and its page is always closed. If anything failed, `readYamlAndInterpret` then rejects with an `AggregateError` whose `errors` contain:
 
 - `WorkerError` — an iteration failed (`scenarioName`, `workerIndex`, `iteration`, original error in `cause`)
 - `BrowserLaunchError` — a browser could not be launched (`browser`, original error in `cause`)
 
 ```typescript
-import { readYamlAndInterpret, WorkerError } from '@bloom-perf/yaml-pptr';
+import { readYamlAndInterpret, ConfigurationError } from '@bloom-perf/yaml-pptr';
 
 try {
   await readYamlAndInterpret(yaml);
 } catch (e) {
-  if (e instanceof AggregateError) {
-    for (const err of e.errors) console.error(err.message);
+  if (e instanceof ConfigurationError) {
+    console.error(e.message); // invalid YAML, unknown key, missing variable...
+  } else if (e instanceof AggregateError) {
+    for (const err of e.errors) console.error(err.message); // WorkerError / BrowserLaunchError
   }
   process.exit(1);
 }
@@ -175,11 +187,13 @@ try {
 | `browser` | `chrome` \| `firefox` | `chrome` | Browser to use |
 | `run` | `PARALLEL` \| `SEQUENTIAL` | `PARALLEL` | Worker start strategy: `PARALLEL` starts all workers after `initialDelaySeconds`; `SEQUENTIAL` starts worker *n* after *n* × `initialDelaySeconds` |
 | `initialDelaySeconds` | number | `0` | Start delay, applied once per worker before its first iteration (see `run`) |
-| `workers` | number | `1` | Number of parallel workers |
-| `iterations` | number | `1` | Repetitions per worker |
+| `workers` | integer ≥ 1 | `1` | Number of parallel workers |
+| `iterations` | integer ≥ 1 | `1` | Repetitions per worker |
 | `location` | string | - | Starting URL |
-| `steps` | array | - | Simplified syntax |
-| `actions` | array | - | Full syntax with options |
+| `steps` | array | - | Simplified syntax (full actions are accepted too) |
+| `actions` | array | - | Full syntax with options, run after `steps` |
+
+All the scenarios of a file start at the same time, whatever their browser: each one is a population of users with its own `workers`, `iterations` and start strategy. Unknown keys are rejected (see [Error handling](#error-handling)).
 
 ### Steps (Simplified Syntax)
 
@@ -218,7 +232,17 @@ try {
 
 ### Actions (Full Syntax)
 
-Use `actions` instead of `steps` when you need advanced options.
+Use the full syntax when you need advanced options. Full actions can be listed in `actions` (run after `steps`), or written directly among `steps` to mix both syntaxes in the order you need:
+
+```yaml
+steps:
+  - click: "#open-menu"
+  - type: WAIT_FOR_SELECTOR
+    selector: ".menu"
+    options:
+      visible: true
+  - click: ".menu .logout"
+```
 
 #### GOTO
 
@@ -302,6 +326,8 @@ Use `actions` instead of `steps` when you need advanced options.
   script: "document.title"
 ```
 
+The script is never interpolated with environment variables (injecting values into code would be unsafe).
+
 #### SET_VIEWPORT
 
 ```yaml
@@ -316,6 +342,8 @@ Use `actions` instead of `steps` when you need advanced options.
 - type: PAUSE  # Press Enter to continue
 ```
 
+Meant for debugging in an interactive terminal. When there is none (CI, container, piped input), the PAUSE is ignored with a warning instead of blocking forever.
+
 #### CLOSE
 
 ```yaml
@@ -324,19 +352,37 @@ Use `actions` instead of `steps` when you need advanced options.
 
 ## Environment Variables
 
-Use `$VAR_NAME` syntax in `location` or `navigate`:
+Keep URLs and credentials out of the YAML with `${VAR_NAME}` placeholders. They are resolved before anything runs: a missing variable is a `ConfigurationError`.
 
 ```yaml
-location: "$BASE_URL"
+scenarios:
+  - name: Login
+    location: "${BASE_URL}/login"
+    steps:
+      - input:
+          selector: "#username"
+          text: "${APP_USER}"
+      - input:
+          selector: "#password"
+          text: "${APP_PASSWORD}"
+      - click: "#login-button"
 ```
 
 ```bash
-BASE_URL=https://example.com npx tsx runner.ts
+BASE_URL=https://example.com APP_USER=alice APP_PASSWORD=... npx tsx runner.ts
 ```
+
+| Syntax | Where | Notes |
+| ------ | ----- | ----- |
+| `${VAR}` | Anywhere in `location`, `navigate`, GOTO `url`/`referer`, selectors, typed `text`, SCREENSHOT `path` | `$${` produces a literal `${` |
+| `$VAR` | As the whole value of `location`, `navigate`, GOTO `url`, SCREENSHOT `path` | Elsewhere a `$` is kept as is (e.g. a password like `$ecret`) |
+| `$VAR[workerIndex]` | As the whole value of `location`, `navigate` | One value per worker, see below |
+
+`EVALUATE` scripts are never interpolated. Typed texts and resolved values are never logged.
 
 ### Indexed Variables
 
-Assign different values to each worker using `$VAR[workerIndex]`:
+Assign different values to each worker using `$VAR[workerIndex]` (comma-separated values). There must be at least one non-empty value per worker, otherwise it is a `ConfigurationError`:
 
 ```yaml
 scenarios:

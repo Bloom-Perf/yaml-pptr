@@ -119,7 +119,7 @@ export interface CloseAction extends BaseAction {
 
 export interface EvaluateAction extends BaseAction {
     actionType: ActionType.Evaluate;
-    script: string | ((...args: any[]) => any);
+    script: string;
 }
 
 export interface SetViewportAction extends BaseAction {

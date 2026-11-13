@@ -1,172 +1,171 @@
 import * as z from 'zod';
 
+// All objects are strict: an unknown key (typically a typo such as
+// `iteration:` or `selecter:`) is reported instead of being silently ignored.
+
+const nonNegativeInt = z.number().int().nonnegative();
+const positiveInt = z.number().int().positive();
+
 const waitUntilEnum = z.enum(['load', 'domcontentloaded', 'networkidle0', 'networkidle2']);
 const mouseButtonEnum = z.enum(['left', 'right', 'middle']);
 
 const supportedBrowsersEnum = z.enum(['chrome', 'firefox']);
 
-const gotoOptionsSchema = z.object({
-    timeout: z.number().optional(),
+const gotoOptionsSchema = z.strictObject({
+    timeout: nonNegativeInt.optional(),
     waitUntil: z.union([waitUntilEnum, waitUntilEnum.array()]).optional(),
     referer: z.string().optional(),
 }).optional();
 
-const waitActionSchema = z.object({
-    type: z.literal('WAIT'),
-    milliseconds: z.number(),
-});
-
-const clickOptionsSchema = z.object({
+const clickOptionsSchema = z.strictObject({
     button: mouseButtonEnum.optional(),
-    clickCount: z.number().optional(),
-    delay: z.number().optional(),
+    clickCount: positiveInt.optional(),
+    delay: nonNegativeInt.optional(),
 }).optional();
 
-const typeOptionsSchema = z.object({
-    delay: z.number().optional(),
+const typeOptionsSchema = z.strictObject({
+    delay: nonNegativeInt.optional(),
 }).optional();
 
-const waitForSelectorOptionsSchema = z.object({
+const waitForSelectorOptionsSchema = z.strictObject({
     visible: z.boolean().optional(),
     hidden: z.boolean().optional(),
-    timeout: z.number().optional(),
+    timeout: nonNegativeInt.optional(),
 }).optional();
 
-const screenshotOptionsSchema = z.object({
+const screenshotOptionsSchema = z.strictObject({
     type: z.enum(['png', 'jpeg']).optional(),
-    quality: z.number().optional(),
+    quality: z.number().int().min(0).max(100).optional(),
     fullPage: z.boolean().optional(),
-    clip: z.object({
+    clip: z.strictObject({
         x: z.number(),
         y: z.number(),
-        width: z.number(),
-        height: z.number(),
+        width: z.number().positive(),
+        height: z.number().positive(),
     }).optional(),
     omitBackground: z.boolean().optional(),
     encoding: z.enum(['base64', 'binary']).optional(),
 }).optional();
 
-// Schémas des actions
-const gotoActionSchema = z.object({
+// Action schemas (full syntax)
+const gotoActionSchema = z.strictObject({
     type: z.literal('GOTO'),
     url: z.string(),
     options: gotoOptionsSchema,
 });
 
-const clickActionSchema = z.object({
+const clickActionSchema = z.strictObject({
     type: z.literal('CLICK'),
     selector: z.string(),
     options: clickOptionsSchema,
 });
 
-const typeActionSchema = z.object({
+const typeActionSchema = z.strictObject({
     type: z.literal('TYPE'),
     selector: z.string(),
     text: z.string(),
     options: typeOptionsSchema,
 });
 
-const waitForSelectorActionSchema = z.object({
+const waitForSelectorActionSchema = z.strictObject({
     type: z.literal('WAIT_FOR_SELECTOR'),
     selector: z.string(),
     options: waitForSelectorOptionsSchema,
 });
 
-const waitForTimeoutActionSchema = z.object({
+const waitForTimeoutActionSchema = z.strictObject({
     type: z.literal('WAIT_FOR_TIMEOUT'),
-    timeout: z.number(),
+    timeout: nonNegativeInt,
 });
 
-const pauseActionSchema = z.object({
+const waitActionSchema = z.strictObject({
+    type: z.literal('WAIT'),
+    milliseconds: nonNegativeInt,
+});
+
+const pauseActionSchema = z.strictObject({
     type: z.literal('PAUSE'),
 });
 
-const screenshotActionSchema = z.object({
+const screenshotActionSchema = z.strictObject({
     type: z.literal('SCREENSHOT'),
     path: z.string(),
     options: screenshotOptionsSchema,
 });
 
-const evaluateActionSchema = z.object({
+const evaluateActionSchema = z.strictObject({
     type: z.literal('EVALUATE'),
-    script: z.union([z.string(), z.function()]),
+    script: z.string(),
 });
 
-const setViewportActionSchema = z.object({
+const setViewportActionSchema = z.strictObject({
     type: z.literal('SET_VIEWPORT'),
-    width: z.number(),
-    height: z.number(),
+    width: positiveInt,
+    height: positiveInt,
 });
 
-const closeActionSchema = z.object({
+const closeActionSchema = z.strictObject({
     type: z.literal('CLOSE'),
 });
 
-// Création d'un tableau mutable de schémas d'actions
-const actionSchemas = [
+const actionSchema = z.discriminatedUnion('type', [
     gotoActionSchema,
     clickActionSchema,
     typeActionSchema,
     waitForSelectorActionSchema,
     waitForTimeoutActionSchema,
+    waitActionSchema,
     pauseActionSchema,
     screenshotActionSchema,
     evaluateActionSchema,
     setViewportActionSchema,
     closeActionSchema,
-    waitActionSchema,
-];
-
-if (actionSchemas.length === 0) {
-    throw new Error('Le tableau des schémas d\'actions est vide.');
-}
-
-type ActionSchemaType = typeof actionSchemas[number];
-const actionSchemasTuple = actionSchemas as [ActionSchemaType, ...ActionSchemaType[]];
-
-const actionSchema = z.discriminatedUnion('type', actionSchemasTuple);
+]);
 
 export type ActionYaml = z.infer<typeof actionSchema>;
 
-const navigateStepSchema = z.object({
+// Step schemas (shorthand syntax)
+const navigateStepSchema = z.strictObject({
     navigate: z.string(),
 });
 
 const waitForeverStepSchema = z.literal('waitForever');
 
-const waitSecondsStepSchema = z.object({
-    wait: z.number(),
+const waitSecondsStepSchema = z.strictObject({
+    wait: z.number().nonnegative(),
 });
 
-const clickStepSchema = z.object({
+const clickStepSchema = z.strictObject({
     click: z.string(),
 });
 
-const inputStepSchema = z.object({
-    input: z.object({
+const inputStepSchema = z.strictObject({
+    input: z.strictObject({
         selector: z.string(),
         text: z.string(),
     }),
 });
 
+// A step is either a shorthand step or a full action, so both syntaxes can be
+// mixed in the order they must run.
 const stepSchema = z.union([
     navigateStepSchema,
     waitForeverStepSchema,
     waitSecondsStepSchema,
     clickStepSchema,
     inputStepSchema,
+    actionSchema,
 ]);
 
 export type StepYaml = z.infer<typeof stepSchema>;
 
-// Schéma du scénario
-const scenarioSchema = z.object({
+const scenarioSchema = z.strictObject({
     name: z.string().optional(),
     browser: supportedBrowsersEnum.optional(),
     run: z.enum(['PARALLEL', 'SEQUENTIAL']).optional(),
     initialDelaySeconds: z.number().nonnegative().optional(),
-    workers: z.number().positive().optional(),
-    iterations: z.number().positive().optional(),
+    workers: positiveInt.optional(),
+    iterations: positiveInt.optional(),
     location: z.string().optional(),
     steps: z.array(stepSchema).optional(),
     actions: z.array(actionSchema).optional(),
@@ -174,7 +173,7 @@ const scenarioSchema = z.object({
 
 export type ScenarioYaml = z.infer<typeof scenarioSchema>;
 
-export const rootZod = z.object({
+export const rootZod = z.strictObject({
     scenarios: z.array(scenarioSchema),
 });
 

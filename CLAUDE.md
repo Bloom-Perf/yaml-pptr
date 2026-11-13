@@ -29,23 +29,26 @@ YAML string → parseYaml() → Resolver.resolve() → evalScenario() → Puppet
 
 **Key modules:**
 
-- `src/index.ts` - Main entry point exposing `readYamlAndInterpret()`. Groups scenarios by browser type and manages browser lifecycle.
+- `src/index.ts` - Main entry point exposing `readYamlAndInterpret()`. Groups scenarios by browser type, manages browser lifecycle, and starts all scenarios in parallel.
 
-- `src/yaml/parser.ts` - Parses YAML string using js-yaml and validates with zod schema.
+- `src/yaml/parser.ts` - Parses YAML string using js-yaml and validates with zod schema. Any problem is thrown as a `ConfigurationError` (with `z.prettifyError` output).
 
-- `src/yaml/validator.ts` - Zod schemas defining the YAML structure. Two ways to define actions:
-  - `steps`: Simple shorthand syntax (`wait`, `navigate`, `waitForever`)
-  - `actions`: Full action objects with type discriminator (`GOTO`, `CLICK`, `TYPE`, etc.)
+- `src/yaml/validator.ts` - Strict zod schemas (unknown keys are rejected) defining the YAML structure. Two ways to define actions:
+  - `steps`: Simple shorthand syntax (`wait`, `navigate`, `waitForever`, `click`, `input`), full actions accepted too so both syntaxes can be mixed in order
+  - `actions`: Full action objects with type discriminator (`GOTO`, `CLICK`, `TYPE`, etc.), run after `steps`
 
-- `src/yaml/resolver.ts` - Transforms validated YAML into domain model. Handles environment variable resolution:
-  - `$VAR_NAME` - Simple env var substitution
-  - `$VAR_NAME[workerIndex]` - Indexed env var (comma-separated values, one per worker)
+- `src/yaml/resolver.ts` - Transforms validated YAML into domain model. Handles environment variable resolution (errors become `ConfigurationError`, resolved values are never logged):
+  - `${VAR_NAME}` - Interpolation anywhere in URLs, selectors, typed texts, screenshot paths (`$${` = literal `${`); never in EVALUATE scripts
+  - `$VAR_NAME` - Whole-value substitution (location, navigate, GOTO url, SCREENSHOT path only)
+  - `$VAR_NAME[workerIndex]` - Indexed env var (comma-separated values, one per worker; location/navigate only; must provide at least one non-empty value per worker)
 
 - `src/puppet/interpreter.ts` - Executes scenarios against Puppeteer. Manages workers, iterations, and parallel/sequential execution strategies.
 
 - `src/core/model.ts` - TypeScript types for the domain model (Action, Scenario, Run, etc.)
 
 **Execution model:**
+- The whole configuration is validated and resolved before anything runs (fail fast with `ConfigurationError`)
+- All scenarios start at the same time (also when they share a browser)
 - Each scenario can have multiple workers running in parallel
 - Workers can start with a delay (`PARALLEL` with `initialDelaySeconds`) or staggered (`SEQUENTIAL` with delay between workers)
 - Each worker runs the scenario for the configured number of iterations; the start delay is applied once per worker, before its first iteration
