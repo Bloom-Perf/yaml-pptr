@@ -33,5 +33,21 @@ export const buildLaunchOptions = (browser: SupportedBrowser, headless: boolean,
     args: [...defaultArgs(browser, headless), ...(extra.args ?? [])],
 });
 
+let previousLaunch: Promise<unknown> = Promise.resolve();
+
+/**
+ * Runs `launch` once the launches queued before it are over, whatever their outcome.
+ *
+ * Puppeteer resolves the browser binary from state shared by all its launches (the browser
+ * launched last, read after asynchronous steps): launching Chrome and Firefox at the same
+ * time made Firefox look for Chrome's version ("Could not find Firefox (ver. 157...)").
+ */
+export const queueLaunch = <T>(launch: () => Promise<T>): Promise<T> => {
+    const result = previousLaunch.then(launch);
+    previousLaunch = result.catch(() => undefined);
+    return result;
+};
+
+/** Launches a browser, one at a time (see `queueLaunch`) */
 export const launchBrowser = (browser: SupportedBrowser, headless: boolean, extra?: p.LaunchOptions): Promise<p.Browser> =>
-    p.launch(buildLaunchOptions(browser, headless, extra));
+    queueLaunch(() => p.launch(buildLaunchOptions(browser, headless, extra)));
