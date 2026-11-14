@@ -1,6 +1,6 @@
 // src/index.ts
 import * as p from 'puppeteer';
-import { SupportedBrowser, OnPageCallback, Scenario } from './core/model.js';
+import { SupportedBrowser, OnPageCallback, OnBrowserCallback, Scenario } from './core/model.js';
 import { parseYaml } from './yaml/parser.js';
 import { Resolver } from './yaml/resolver.js';
 import { evalScenario } from './puppet/interpreter.js';
@@ -8,7 +8,7 @@ import { launchBrowser } from './puppet/launcher.js';
 import { YpLogger, dumbLogger } from './core/logger.js';
 import { BrowserLaunchError } from './core/errors.js';
 
-export type { ScenarioContext, OnPageCallback } from './core/model.js';
+export type { ScenarioContext, OnPageCallback, OnBrowserCallback, SupportedBrowser } from './core/model.js';
 export { WorkerError, BrowserLaunchError, ConfigurationError } from './core/errors.js';
 
 export type ReadYamlOptions = {
@@ -16,6 +16,12 @@ export type ReadYamlOptions = {
     browsers?: { [key in SupportedBrowser]?: p.Browser };
     logger?: YpLogger;
     onPage?: OnPageCallback;
+    /**
+     * Called once per browser the scenarios run in (launched or passed in `browsers`), before
+     * they start in it: e.g. to monitor its processes. If it throws, the scenarios of this
+     * browser do not run and the error is reported as a `BrowserLaunchError`.
+     */
+    onBrowser?: OnBrowserCallback;
     /** Run launched browsers in headless mode. Defaults to `true`. */
     headless?: boolean;
     /** Extra Puppeteer launch options per browser (e.g. `executablePath`). `args` are appended to the defaults. */
@@ -38,7 +44,7 @@ export const readYamlAndInterpret = async (
     yamlContent: string,
     options: ReadYamlOptions = {}
 ): Promise<void> => {
-    const { browsers = {}, logger = dumbLogger, onPage, headless = true, launchOptions = {} } = options;
+    const { browsers = {}, logger = dumbLogger, onPage, onBrowser, headless = true, launchOptions = {} } = options;
 
     const rootYaml = parseYaml(yamlContent);
 
@@ -76,6 +82,15 @@ export const readYamlAndInterpret = async (
         const runningBrowser = browser;
 
         try {
+            if (onBrowser) {
+                try {
+                    await onBrowser(runningBrowser, browserName);
+                } catch (e) {
+                    const error = new BrowserLaunchError(browserName, e);
+                    logger.error(error.message);
+                    return [error];
+                }
+            }
             const errorsPerScenario = await Promise.all(
                 scenarios.map(async scenario => {
                     try {

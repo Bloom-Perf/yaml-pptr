@@ -32,7 +32,8 @@ export class WorkerError extends Error {
 }
 
 /**
- * Raised when a browser could not be launched (missing binary, bad options...).
+ * Raised when a browser could not be launched (missing binary, bad options...), or when
+ * the `onBrowser` callback failed on it.
  */
 export class BrowserLaunchError extends Error {
     readonly browser: string;

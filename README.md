@@ -123,6 +123,7 @@ await readYamlAndInterpret(yaml, {
   },
   browsers: { chrome: myBrowser }, // reuse already launched browsers (not closed)
   logger: myLogger,
+  onBrowser: async (browser, name) => { /* browser hook, e.g. browser.process()?.pid */ },
   onPage: async (page, ctx) => { /* page hook */ },
 });
 ```
@@ -133,6 +134,7 @@ await readYamlAndInterpret(yaml, {
 | `launchOptions` | `{}` | Puppeteer `LaunchOptions` per browser; `args` are appended to the defaults |
 | `browsers` | `{}` | Pre-launched browsers to use instead of launching new ones |
 | `logger` | console | Custom logger (`debug`, `info`, `warn`, `error`) |
+| `onBrowser` | - | Callback invoked once per browser the scenarios run in (launched or passed in `browsers`), with its name (`chrome` or `firefox`), before they start in it. If it throws, the scenarios of this browser do not run and the error is reported as a `BrowserLaunchError` |
 | `onPage` | - | Callback invoked on every new page with `{ scenarioName, workerIndex, iteration }` |
 
 ### Firefox
@@ -160,7 +162,7 @@ ConfigurationError: Invalid scenario configuration:
 Then every scenario, worker and iteration always runs to completion: a failed iteration does not stop the next iterations nor the other workers, and its page is always closed. If anything failed, `readYamlAndInterpret` then rejects with an `AggregateError` whose `errors` contain:
 
 - `WorkerError` — an iteration failed (`scenarioName`, `workerIndex`, `iteration`, original error in `cause`)
-- `BrowserLaunchError` — a browser could not be launched (`browser`, original error in `cause`)
+- `BrowserLaunchError` — a browser could not be launched, or `onBrowser` failed on it (`browser`, original error in `cause`)
 
 ```typescript
 import { readYamlAndInterpret, ConfigurationError } from '@bloom-perf/yaml-pptr';
