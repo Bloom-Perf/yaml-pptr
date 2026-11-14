@@ -173,3 +173,6 @@ export type ScenarioContext = {
 };
 
 export type OnPageCallback = (page: import('puppeteer').Page, context: ScenarioContext) => Promise<void>;
+
+/** Called once per browser the scenarios run in, before they start in it. */
+export type OnBrowserCallback = (browser: import('puppeteer').Browser, name: SupportedBrowser) => void | Promise<void>;

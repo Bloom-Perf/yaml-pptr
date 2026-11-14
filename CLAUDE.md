@@ -29,7 +29,7 @@ YAML string → parseYaml() → Resolver.resolve() → evalScenario() → Puppet
 
 **Key modules:**
 
-- `src/index.ts` - Main entry point exposing `readYamlAndInterpret()`. Groups scenarios by browser type, manages browser lifecycle, and starts all scenarios in parallel.
+- `src/index.ts` - Main entry point exposing `readYamlAndInterpret()`. Groups scenarios by browser type, manages browser lifecycle (calls `onBrowser` once per browser used, before its scenarios; a failure there is a `BrowserLaunchError`), and starts all scenarios in parallel.
 
 - `src/yaml/parser.ts` - Parses YAML string using js-yaml and validates with zod schema. Any problem is thrown as a `ConfigurationError` (with `z.prettifyError` output).
 

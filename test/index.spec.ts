@@ -312,6 +312,94 @@ scenarios:
         });
     });
 
+    describe("onBrowser callback", () => {
+        it("is called once per browser used, before its scenarios start", async () => {
+            const events: string[] = [];
+            const chrome = createMockedBrowser();
+            const firefox = createMockedBrowser();
+            const unused = createMockedBrowser();
+
+            await readYamlAndInterpret(`
+scenarios:
+    - name: A
+      workers: 2
+      location: "http://a.com"
+    - name: B
+      browser: firefox
+      location: "http://b.com"
+    - name: C
+      browser: chrome
+      location: "http://c.com"`, {
+                browsers: { chrome, firefox },
+                onBrowser: async (browser, name) => {
+                    events.push(`browser ${name}`);
+                    expect(browser).to.equal(name === 'chrome' ? chrome : firefox);
+                    expect(browser).to.not.equal(unused);
+                },
+                onPage: async (_page, ctx) => {
+                    events.push(`page ${ctx.scenarioName}`);
+                },
+            });
+
+            expect(events.filter(e => e.startsWith('browser')).sort()).to.deep.equal(['browser chrome', 'browser firefox']);
+            // Every page of a browser opens after its callback
+            expect(events.indexOf('page A')).to.be.above(events.indexOf('browser chrome'));
+            expect(events.indexOf('page C')).to.be.above(events.indexOf('browser chrome'));
+            expect(events.indexOf('page B')).to.be.above(events.indexOf('browser firefox'));
+        });
+
+        it("is not called for a browser that no scenario uses", async () => {
+            const names: string[] = [];
+
+            await readYamlAndInterpret(`
+scenarios:
+    - location: "http://a.com"`, {
+                browsers: { chrome: createMockedBrowser(), firefox: createMockedBrowser() },
+                onBrowser: (_browser, name) => {
+                    names.push(name);
+                },
+            });
+
+            expect(names).to.deep.equal(['chrome']);
+        });
+
+        it("skips the scenarios of a browser when it throws, and reports a BrowserLaunchError", async () => {
+            const chromeCalls: CallLog[] = [];
+            const firefoxCalls: CallLog[] = [];
+            let caught: unknown;
+
+            try {
+                await readYamlAndInterpret(`
+scenarios:
+    - name: In Chrome
+      location: "http://a.com"
+    - name: In Firefox
+      browser: firefox
+      location: "http://b.com"`, {
+                    browsers: {
+                        chrome: createMockedBrowser({}, chromeCalls),
+                        firefox: createMockedBrowser({}, firefoxCalls),
+                    },
+                    onBrowser: async (_browser, name) => {
+                        if (name === 'chrome') throw new Error('cannot monitor it');
+                    },
+                });
+            } catch (e) {
+                caught = e;
+            }
+
+            expect(caught).to.be.instanceOf(AggregateError);
+            const errors = (caught as AggregateError).errors;
+            expect(errors).to.have.lengthOf(1);
+            expect(errors[0]).to.be.instanceOf(BrowserLaunchError);
+            expect(errors[0].browser).to.equal('chrome');
+            expect(errors[0].message).to.include('cannot monitor it');
+            // The scenarios of the other browser ran
+            expect(chromeCalls.filter(c => c.method === 'goto')).to.have.lengthOf(0);
+            expect(firefoxCalls.filter(c => c.method === 'goto')).to.deep.equal([{ method: 'goto', args: ['http://b.com'] }]);
+        });
+    });
+
     it("runs scenarios targeting the same browser in parallel", async () => {
         const starts: Record<string, number> = {};
         const t0 = Date.now();
