@@ -25,7 +25,11 @@ const defaultArgs = (browser: SupportedBrowser, headless: boolean): string[] => 
  * selected with `browser` (not `channel`, which only accepts Chrome release
  * channels). User options override defaults; user `args` are appended.
  */
-export const buildLaunchOptions = (browser: SupportedBrowser, headless: boolean, extra: p.LaunchOptions = {}): p.LaunchOptions => ({
+export const buildLaunchOptions = (
+    browser: SupportedBrowser,
+    headless: boolean,
+    extra: p.LaunchOptions = {},
+): p.LaunchOptions => ({
     browser,
     headless,
     acceptInsecureCerts: true,
@@ -49,5 +53,8 @@ export const queueLaunch = <T>(launch: () => Promise<T>): Promise<T> => {
 };
 
 /** Launches a browser, one at a time (see `queueLaunch`) */
-export const launchBrowser = (browser: SupportedBrowser, headless: boolean, extra?: p.LaunchOptions): Promise<p.Browser> =>
-    queueLaunch(() => p.launch(buildLaunchOptions(browser, headless, extra)));
+export const launchBrowser = (
+    browser: SupportedBrowser,
+    headless: boolean,
+    extra?: p.LaunchOptions,
+): Promise<p.Browser> => queueLaunch(() => p.launch(buildLaunchOptions(browser, headless, extra)));

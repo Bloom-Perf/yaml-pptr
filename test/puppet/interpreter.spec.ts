@@ -43,12 +43,13 @@ describe('Interpreter', () => {
     };
 
     // Each newPage() returns a fresh page, like Puppeteer does
-    const createMockBrowser = (calls: CallLog[] = []) => ({
-        newPage: async () => {
-            calls.push({ method: 'newPage', args: [] });
-            return createMockPage(calls);
-        },
-    } as any);
+    const createMockBrowser = (calls: CallLog[] = []) =>
+        ({
+            newPage: async () => {
+                calls.push({ method: 'newPage', args: [] });
+                return createMockPage(calls);
+            },
+        }) as any;
 
     const createScenario = (actions: Action[], overrides: Partial<Scenario> = {}): Scenario => ({
         name: 'Test Scenario',
@@ -78,12 +79,15 @@ describe('Interpreter', () => {
         it('navigates to indexed URL based on worker index', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                {
-                    actionType: ActionType.Navigate,
-                    location: { workerIndex: ['http://url0.com', 'http://url1.com', 'http://url2.com'] },
-                },
-            ], { workers: 3 });
+            const scenario = createScenario(
+                [
+                    {
+                        actionType: ActionType.Navigate,
+                        location: { workerIndex: ['http://url0.com', 'http://url1.com', 'http://url2.com'] },
+                    },
+                ],
+                { workers: 3 },
+            );
 
             await evalScenario(browser, scenario);
 
@@ -101,9 +105,7 @@ describe('Interpreter', () => {
         it('executes goto with URL', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Goto, url: 'http://goto.com' },
-            ]);
+            const scenario = createScenario([{ actionType: ActionType.Goto, url: 'http://goto.com' }]);
 
             await evalScenario(browser, scenario);
 
@@ -138,9 +140,7 @@ describe('Interpreter', () => {
         it('clicks on selector', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Click, selector: '#button' },
-            ]);
+            const scenario = createScenario([{ actionType: ActionType.Click, selector: '#button' }]);
 
             await evalScenario(browser, scenario);
 
@@ -175,9 +175,7 @@ describe('Interpreter', () => {
         it('types text into selector', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Type, selector: '#input', text: 'hello world' },
-            ]);
+            const scenario = createScenario([{ actionType: ActionType.Type, selector: '#input', text: 'hello world' }]);
 
             await evalScenario(browser, scenario);
 
@@ -210,9 +208,7 @@ describe('Interpreter', () => {
         it('waits for selector', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.WaitForSelector, selector: '.loaded' },
-            ]);
+            const scenario = createScenario([{ actionType: ActionType.WaitForSelector, selector: '.loaded' }]);
 
             await evalScenario(browser, scenario);
 
@@ -243,9 +239,7 @@ describe('Interpreter', () => {
         it('waits for specified milliseconds on the Node side (not inside the page)', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Wait, milliseconds: 80 },
-            ]);
+            const scenario = createScenario([{ actionType: ActionType.Wait, milliseconds: 80 }]);
 
             const start = Date.now();
             await evalScenario(browser, scenario);
@@ -260,9 +254,7 @@ describe('Interpreter', () => {
         it('waits for timeout on the Node side (not inside the page)', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.WaitForTimeout, timeout: 80 },
-            ]);
+            const scenario = createScenario([{ actionType: ActionType.WaitForTimeout, timeout: 80 }]);
 
             const start = Date.now();
             await evalScenario(browser, scenario);
@@ -276,9 +268,7 @@ describe('Interpreter', () => {
         it('takes screenshot with path', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Screenshot, path: 'screenshot.png' },
-            ]);
+            const scenario = createScenario([{ actionType: ActionType.Screenshot, path: 'screenshot.png' }]);
 
             await evalScenario(browser, scenario);
 
@@ -322,9 +312,7 @@ describe('Interpreter', () => {
         it('evaluates script', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Evaluate, script: 'console.log("test")' },
-            ]);
+            const scenario = createScenario([{ actionType: ActionType.Evaluate, script: 'console.log("test")' }]);
 
             await evalScenario(browser, scenario);
 
@@ -338,9 +326,7 @@ describe('Interpreter', () => {
         it('sets viewport dimensions', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.SetViewport, width: 1920, height: 1080 },
-            ]);
+            const scenario = createScenario([{ actionType: ActionType.SetViewport, width: 1920, height: 1080 }]);
 
             await evalScenario(browser, scenario);
 
@@ -356,13 +342,24 @@ describe('Interpreter', () => {
             Object.defineProperty(process.stdin, 'isTTY', { value: undefined, configurable: true });
             try {
                 const warnings: string[] = [];
-                const logger = { debug() {}, info() {}, warn: (m: string) => { warnings.push(m); }, error() {} };
+                const logger = {
+                    debug() {},
+                    info() {},
+                    warn: (m: string) => {
+                        warnings.push(m);
+                    },
+                    error() {},
+                };
                 const calls: CallLog[] = [];
 
-                await evalScenario(createMockBrowser(calls), createScenario([
-                    { actionType: ActionType.Pause },
-                    { actionType: ActionType.Click, selector: '#next' },
-                ]), logger);
+                await evalScenario(
+                    createMockBrowser(calls),
+                    createScenario([
+                        { actionType: ActionType.Pause },
+                        { actionType: ActionType.Click, selector: '#next' },
+                    ]),
+                    logger,
+                );
 
                 expect(warnings.some(w => w.includes('PAUSE ignored'))).to.equal(true);
                 // The scenario went on after the PAUSE
@@ -381,9 +378,7 @@ describe('Interpreter', () => {
         it('closes the page exactly once (no second close by the cleanup)', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Close },
-            ]);
+            const scenario = createScenario([{ actionType: ActionType.Close }]);
 
             await evalScenario(browser, scenario);
 
@@ -420,9 +415,10 @@ describe('Interpreter', () => {
         it('runs scenario with multiple workers', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
-            ], { workers: 3 });
+            const scenario = createScenario(
+                [{ actionType: ActionType.Navigate, location: { url: 'http://example.com' } }],
+                { workers: 3 },
+            );
 
             await evalScenario(browser, scenario);
 
@@ -433,9 +429,10 @@ describe('Interpreter', () => {
         it('runs scenario with multiple iterations', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
-            ], { iterations: 3 });
+            const scenario = createScenario(
+                [{ actionType: ActionType.Navigate, location: { url: 'http://example.com' } }],
+                { iterations: 3 },
+            );
 
             await evalScenario(browser, scenario);
 
@@ -446,9 +443,10 @@ describe('Interpreter', () => {
         it('runs scenario with multiple workers and iterations', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
-            ], { workers: 2, iterations: 3 });
+            const scenario = createScenario(
+                [{ actionType: ActionType.Navigate, location: { url: 'http://example.com' } }],
+                { workers: 2, iterations: 3 },
+            );
 
             await evalScenario(browser, scenario);
 
@@ -461,9 +459,10 @@ describe('Interpreter', () => {
         it('uses PARALLEL strategy with initial delay', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
-            ], { run: { initialDelaySeconds: 0 } });
+            const scenario = createScenario(
+                [{ actionType: ActionType.Navigate, location: { url: 'http://example.com' } }],
+                { run: { initialDelaySeconds: 0 } },
+            );
 
             await evalScenario(browser, scenario);
 
@@ -474,12 +473,13 @@ describe('Interpreter', () => {
         it('uses SEQUENTIAL strategy with delay between workers', async () => {
             const calls: CallLog[] = [];
             const browser = createMockBrowser(calls);
-            const scenario = createScenario([
-                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
-            ], {
-                workers: 2,
-                run: { delaySecondsBetweenWorkerInits: 0 },
-            });
+            const scenario = createScenario(
+                [{ actionType: ActionType.Navigate, location: { url: 'http://example.com' } }],
+                {
+                    workers: 2,
+                    run: { delaySecondsBetweenWorkerInits: 0 },
+                },
+            );
 
             await evalScenario(browser, scenario);
 
@@ -532,9 +532,10 @@ describe('Interpreter', () => {
             const browser = createMockBrowser(calls);
             const contexts: ScenarioContext[] = [];
 
-            const scenario = createScenario([
-                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
-            ], { name: 'My Scenario' });
+            const scenario = createScenario(
+                [{ actionType: ActionType.Navigate, location: { url: 'http://example.com' } }],
+                { name: 'My Scenario' },
+            );
 
             await evalScenario(browser, scenario, undefined, async (_page, ctx) => {
                 contexts.push(ctx);
@@ -553,9 +554,10 @@ describe('Interpreter', () => {
             const browser = createMockBrowser(calls);
             const contexts: ScenarioContext[] = [];
 
-            const scenario = createScenario([
-                { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
-            ], { workers: 2, iterations: 3 });
+            const scenario = createScenario(
+                [{ actionType: ActionType.Navigate, location: { url: 'http://example.com' } }],
+                { workers: 2, iterations: 3 },
+            );
 
             await evalScenario(browser, scenario, undefined, async (_page, ctx) => {
                 contexts.push(ctx);
@@ -609,9 +611,7 @@ describe('Interpreter', () => {
             } as any;
         };
 
-        const navigate: Action[] = [
-            { actionType: ActionType.Navigate, location: { url: 'http://example.com' } },
-        ];
+        const navigate: Action[] = [{ actionType: ActionType.Navigate, location: { url: 'http://example.com' } }];
 
         const runAndCatch = async (browser: any, scenario: Scenario): Promise<AggregateError> => {
             try {
@@ -624,7 +624,10 @@ describe('Interpreter', () => {
 
         it('continues other workers when one fails', async () => {
             const calls: CallLog[] = [];
-            const caught = await runAndCatch(createFailingBrowser(calls, [1]), createScenario(navigate, { workers: 3 }));
+            const caught = await runAndCatch(
+                createFailingBrowser(calls, [1]),
+                createScenario(navigate, { workers: 3 }),
+            );
 
             // All 3 workers attempted despite the failure
             expect(calls.filter(c => c.method === 'goto')).to.have.lengthOf(3);
@@ -643,7 +646,10 @@ describe('Interpreter', () => {
 
         it('continues the next iterations of a worker after a failed iteration', async () => {
             const calls: CallLog[] = [];
-            const caught = await runAndCatch(createFailingBrowser(calls, [1]), createScenario(navigate, { iterations: 3 }));
+            const caught = await runAndCatch(
+                createFailingBrowser(calls, [1]),
+                createScenario(navigate, { iterations: 3 }),
+            );
 
             // The failure of iteration 0 did not stop iterations 1 and 2
             expect(calls.filter(c => c.method === 'newPage')).to.have.lengthOf(3);
@@ -655,7 +661,10 @@ describe('Interpreter', () => {
 
         it('closes the page of a failed iteration', async () => {
             const calls: CallLog[] = [];
-            const caught = await runAndCatch(createFailingBrowser(calls, [1, 2]), createScenario(navigate, { iterations: 2 }));
+            const caught = await runAndCatch(
+                createFailingBrowser(calls, [1, 2]),
+                createScenario(navigate, { iterations: 2 }),
+            );
 
             expect(caught.errors.map((e: WorkerError) => e.iteration)).to.deep.equal([0, 1]);
             // One close per page, even though both iterations failed

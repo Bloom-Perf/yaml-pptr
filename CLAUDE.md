@@ -9,6 +9,8 @@ npm test                # Run all tests with mocha (TypeScript loaded through ts
 npm run test:coverage   # Run tests with coverage via c8
 npm run typecheck       # Type-check src, test and examples (no emit)
 npm run build           # Build with esbuild + tsc, then generate dist/schema.json (outputs to dist/)
+npm run format          # Format the TypeScript files with Prettier (.prettierrc)
+npm run format:check    # Check the formatting (CI runs it)
 ```
 
 To run a single test file:

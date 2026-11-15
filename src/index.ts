@@ -40,10 +40,7 @@ export type ReadYamlOptions = {
  *   whose `errors` are `BrowserLaunchError` / `WorkerError` instances, in
  *   scenario order.
  */
-export const readYamlAndInterpret = async (
-    yamlContent: string,
-    options: ReadYamlOptions = {}
-): Promise<void> => {
+export const readYamlAndInterpret = async (yamlContent: string, options: ReadYamlOptions = {}): Promise<void> => {
     const { browsers = {}, logger = dumbLogger, onPage, onBrowser, headless = true, launchOptions = {} } = options;
 
     const rootYaml = parseYaml(yamlContent);
@@ -99,7 +96,7 @@ export const readYamlAndInterpret = async (
                     } catch (e) {
                         return e instanceof AggregateError ? e.errors : [e];
                     }
-                })
+                }),
             );
             return errorsPerScenario.flat();
         } finally {
@@ -110,7 +107,7 @@ export const readYamlAndInterpret = async (
     };
 
     const errorsPerBrowser = await Promise.all(
-        [...scenariosByBrowser].map(([name, scenarios]) => runOnBrowser(name, scenarios))
+        [...scenariosByBrowser].map(([name, scenarios]) => runOnBrowser(name, scenarios)),
     );
     const errors = errorsPerBrowser.flat();
 

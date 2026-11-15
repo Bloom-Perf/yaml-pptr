@@ -17,10 +17,13 @@ import {
     TypeAction,
     WaitAction,
     WaitForSelectorAction,
-    WaitForTimeoutAction
+    WaitForTimeoutAction,
 } from '../core/model.js';
 
-function ensureCorrectExtension(path: string, type?: 'png' | 'jpeg' | 'webp'): `${string}.png` | `${string}.jpeg` | `${string}.webp` {
+function ensureCorrectExtension(
+    path: string,
+    type?: 'png' | 'jpeg' | 'webp',
+): `${string}.png` | `${string}.jpeg` | `${string}.webp` {
     const detectedType = type || 'png';
 
     // Si le chemin a déjà une extension valide, on le retourne tel quel
@@ -48,13 +51,20 @@ const startDelaySeconds = (run: Run, workerIndex: number): number =>
  * nor the other workers. Once everything is done, the promise rejects with an
  * `AggregateError` of `WorkerError` (one per failed iteration) if anything failed.
  */
-export const evalScenario = async (browser: p.Browser, scenario: Scenario, logger: YpLogger = dumbLogger, onPage?: OnPageCallback): Promise<void> => {
+export const evalScenario = async (
+    browser: p.Browser,
+    scenario: Scenario,
+    logger: YpLogger = dumbLogger,
+    onPage?: OnPageCallback,
+): Promise<void> => {
     const errors: WorkerError[] = [];
 
     const runWorker = async (workerIndex: number): Promise<void> => {
         const delay = startDelaySeconds(scenario.run, workerIndex);
         const strategy = 'delaySecondsBetweenWorkerInits' in scenario.run ? 'SEQUENTIAL' : 'PARALLEL';
-        logger.info(`Scenario "${scenario.name}" (worker ${workerIndex}) started (${strategy}, starting in ${delay}s).`);
+        logger.info(
+            `Scenario "${scenario.name}" (worker ${workerIndex}) started (${strategy}, starting in ${delay}s).`,
+        );
         await sleep(delay * 1000);
 
         for (let iteration = 0; iteration < scenario.iterations; iteration++) {
@@ -81,7 +91,14 @@ export const evalScenario = async (browser: p.Browser, scenario: Scenario, logge
  * Runs one iteration in a fresh page. The page is always closed afterwards,
  * whether the iteration succeeded or not (unless a CLOSE action already did it).
  */
-const runIteration = async (browser: p.Browser, scenario: Scenario, workerIndex: number, iteration: number, logger: YpLogger, onPage?: OnPageCallback): Promise<void> => {
+const runIteration = async (
+    browser: p.Browser,
+    scenario: Scenario,
+    workerIndex: number,
+    iteration: number,
+    logger: YpLogger,
+    onPage?: OnPageCallback,
+): Promise<void> => {
     let page: p.Page | undefined;
     try {
         page = await browser.newPage();
@@ -97,31 +114,46 @@ const runIteration = async (browser: p.Browser, scenario: Scenario, workerIndex:
         await evalScenarioOnce(scenario.name, scenario.actions, page, workerIndex, logger);
     } finally {
         if (page && !page.isClosed()) {
-            await page.close().catch(e =>
-                logger.warn(`Scenario "${scenario.name}" (worker ${workerIndex}, iteration ${iteration}) > failed to close page: ${e}`)
-            );
+            await page
+                .close()
+                .catch(e =>
+                    logger.warn(
+                        `Scenario "${scenario.name}" (worker ${workerIndex}, iteration ${iteration}) > failed to close page: ${e}`,
+                    ),
+                );
         }
     }
 };
 
-const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p.Page, workerIndex: number, logger: YpLogger = dumbLogger) => {
-
+const evalScenarioOnce = async (
+    scenarioName: string,
+    actions: Action[],
+    page: p.Page,
+    workerIndex: number,
+    logger: YpLogger = dumbLogger,
+) => {
     for (const action of actions) {
         const { actionType } = action;
         switch (actionType) {
             case ActionType.Navigate:
                 const navigateAction = action as NavigateAction;
                 if ('url' in navigateAction.location) {
-                    logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > Navigating to location "${navigateAction.location.url}"`);
+                    logger.info(
+                        `Scenario "${scenarioName}" (worker ${workerIndex}) > Navigating to location "${navigateAction.location.url}"`,
+                    );
                     await page.goto(navigateAction.location.url);
                 } else {
-                    logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > Navigating to indexed location "${navigateAction.location.workerIndex[workerIndex]}"`);
+                    logger.info(
+                        `Scenario "${scenarioName}" (worker ${workerIndex}) > Navigating to indexed location "${navigateAction.location.workerIndex[workerIndex]}"`,
+                    );
                     await page.goto(navigateAction.location.workerIndex[workerIndex]);
                 }
                 break;
             case ActionType.Wait:
                 const waitAction = action as WaitAction;
-                logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > Waiting ${waitAction.milliseconds} milliseconds...`);
+                logger.info(
+                    `Scenario "${scenarioName}" (worker ${workerIndex}) > Waiting ${waitAction.milliseconds} milliseconds...`,
+                );
                 await sleep(waitAction.milliseconds);
                 break;
             case ActionType.WaitForever:
@@ -157,18 +189,24 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
                 break;
             case ActionType.WaitForSelector:
                 const waitForSelectorAction = action as WaitForSelectorAction;
-                logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > WAIT_FOR_SELECTOR "${waitForSelectorAction.selector}"`);
+                logger.info(
+                    `Scenario "${scenarioName}" (worker ${workerIndex}) > WAIT_FOR_SELECTOR "${waitForSelectorAction.selector}"`,
+                );
                 await page.waitForSelector(waitForSelectorAction.selector, waitForSelectorAction.options);
                 break;
             case ActionType.WaitForTimeout:
                 const waitForTimeoutAction = action as WaitForTimeoutAction;
-                logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > WAIT_FOR_TIMEOUT ${waitForTimeoutAction.timeout} milliseconds`);
+                logger.info(
+                    `Scenario "${scenarioName}" (worker ${workerIndex}) > WAIT_FOR_TIMEOUT ${waitForTimeoutAction.timeout} milliseconds`,
+                );
                 await sleep(waitForTimeoutAction.timeout);
                 break;
             case ActionType.Pause:
                 if (!process.stdin.isTTY) {
                     // Nobody can press Enter (CI, container, piped input): waiting would block forever
-                    logger.warn(`Scenario "${scenarioName}" (worker ${workerIndex}) > PAUSE ignored: no interactive terminal`);
+                    logger.warn(
+                        `Scenario "${scenarioName}" (worker ${workerIndex}) > PAUSE ignored: no interactive terminal`,
+                    );
                     break;
                 }
                 logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > PAUSE, press Enter to continue...`);
@@ -182,7 +220,9 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
                 break;
             case ActionType.Screenshot:
                 const screenshotAction = action as ScreenshotAction;
-                logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > SCREENSHOT "${screenshotAction.path}"`);
+                logger.info(
+                    `Scenario "${scenarioName}" (worker ${workerIndex}) > SCREENSHOT "${screenshotAction.path}"`,
+                );
                 const screenshotOptions = {
                     path: ensureCorrectExtension(screenshotAction.path, screenshotAction.options?.type),
                     //path: screenshotAction.path,
@@ -202,7 +242,9 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
                 break;
             case ActionType.SetViewport:
                 const setViewportAction = action as SetViewportAction;
-                logger.info(`Scenario "${scenarioName}" (worker ${workerIndex}) > SET_VIEWPORT width=${setViewportAction.width}, height=${setViewportAction.height}`);
+                logger.info(
+                    `Scenario "${scenarioName}" (worker ${workerIndex}) > SET_VIEWPORT width=${setViewportAction.width}, height=${setViewportAction.height}`,
+                );
                 await page.setViewport({ width: setViewportAction.width, height: setViewportAction.height });
                 break;
             case ActionType.Close:
@@ -210,7 +252,9 @@ const evalScenarioOnce = async (scenarioName: string, actions: Action[], page: p
                 await page.close();
                 break;
             default:
-                throw new Error(`Unhandled action type "${actionType}" while evaluating scenario "${scenarioName}" on worker ${workerIndex}`);
+                throw new Error(
+                    `Unhandled action type "${actionType}" while evaluating scenario "${scenarioName}" on worker ${workerIndex}`,
+                );
         }
     }
 };
