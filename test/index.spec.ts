@@ -1,66 +1,66 @@
 // test/index.spec.ts
 import { expect } from 'chai';
-import { readYamlAndInterpret, WorkerError, BrowserLaunchError, ConfigurationError } from "../src/index.js";
-import { ScenarioContext } from "../src/core/model.js";
+import { readYamlAndInterpret, WorkerError, BrowserLaunchError, ConfigurationError } from '../src/index.js';
+import { ScenarioContext } from '../src/core/model.js';
 
 interface CallLog {
     method: string;
     args: any[];
 }
 
-describe("Integration tests", () => {
+describe('Integration tests', () => {
+    const createMockedBrowser = (g: { [k: string]: number } = {}, calls: CallLog[] = []) =>
+        ({
+            gotos() {
+                return g;
+            },
+            calls() {
+                return calls;
+            },
+            async newPage() {
+                console.log(`-> newPage`);
+                let closed = false;
+                return Promise.resolve({
+                    async goto(str: string) {
+                        console.log(`-> goto ${str}`);
+                        g[str] = (g[str] || 0) + 1;
+                        calls.push({ method: 'goto', args: [str] });
+                        return Promise.resolve();
+                    },
+                    async click(selector: string) {
+                        console.log(`-> click ${selector}`);
+                        calls.push({ method: 'click', args: [selector] });
+                        return Promise.resolve();
+                    },
+                    async type(selector: string, text: string) {
+                        console.log(`-> type ${selector} "${text}"`);
+                        calls.push({ method: 'type', args: [selector, text] });
+                        return Promise.resolve();
+                    },
+                    async evaluate() {
+                        calls.push({ method: 'evaluate', args: [] });
+                        return Promise.resolve();
+                    },
+                    async close() {
+                        console.log(`-> close`);
+                        closed = true;
+                        calls.push({ method: 'close', args: [] });
+                        return Promise.resolve();
+                    },
+                    isClosed() {
+                        return closed;
+                    },
+                });
+            },
+        }) as any;
 
-    const createMockedBrowser = (g: { [k: string]: number } = {}, calls: CallLog[] = []) => ({
-        gotos() {
-            return g;
-        },
-        calls() {
-            return calls;
-        },
-        async newPage() {
-            console.log(`-> newPage`);
-            let closed = false;
-            return Promise.resolve({
-                async goto(str: string) {
-                    console.log(`-> goto ${str}`);
-                    g[str] = (g[str] || 0) + 1;
-                    calls.push({ method: 'goto', args: [str] });
-                    return Promise.resolve();
-                },
-                async click(selector: string) {
-                    console.log(`-> click ${selector}`);
-                    calls.push({ method: 'click', args: [selector] });
-                    return Promise.resolve();
-                },
-                async type(selector: string, text: string) {
-                    console.log(`-> type ${selector} "${text}"`);
-                    calls.push({ method: 'type', args: [selector, text] });
-                    return Promise.resolve();
-                },
-                async evaluate() {
-                    calls.push({ method: 'evaluate', args: [] });
-                    return Promise.resolve();
-                },
-                async close() {
-                    console.log(`-> close`);
-                    closed = true;
-                    calls.push({ method: 'close', args: [] });
-                    return Promise.resolve();
-                },
-                isClosed() {
-                    return closed;
-                },
-            });
-        },
-    } as any);
-
-    it("basic test", async () => {
+    it('basic test', async () => {
         const mockedBrowser = createMockedBrowser();
 
         // Définir les variables d'environnement nécessaires
-        process.env["LOC"] = "http://loc.com";
-        process.env["TEST"] = "http://test.com";
-        process.env["INDEXED"] = "http://test1.com,http://test2.com,http://test3.com";
+        process.env['LOC'] = 'http://loc.com';
+        process.env['TEST'] = 'http://test.com';
+        process.env['INDEXED'] = 'http://test1.com,http://test2.com,http://test3.com';
 
         const yamlContent = `
 scenarios:
@@ -87,25 +87,25 @@ scenarios:
 
         // Assertions pour vérifier que les URLs ont été visitées le nombre de fois attendu
         expect(Object.keys(mockedBrowser.gotos())).to.include.members([
-            "http://noop.com",
-            "http://loc.com",
-            "http://test.com",
-            "http://example.com/page1",
-            "http://test1.com",
-            "http://test2.com",
-            "http://test3.com",
+            'http://noop.com',
+            'http://loc.com',
+            'http://test.com',
+            'http://example.com/page1',
+            'http://test1.com',
+            'http://test2.com',
+            'http://test3.com',
         ]);
 
-        expect(mockedBrowser.gotos()["http://loc.com"]).to.equal(5);
-        expect(mockedBrowser.gotos()["http://test.com"]).to.equal(1);
-        expect(mockedBrowser.gotos()["http://example.com/page1"]).to.equal(1);
-        expect(mockedBrowser.gotos()["http://test1.com"]).to.equal(1);
-        expect(mockedBrowser.gotos()["http://test2.com"]).to.equal(1);
-        expect(mockedBrowser.gotos()["http://test3.com"]).to.equal(1);
-        expect(mockedBrowser.gotos()["http://noop.com"]).to.equal(1);
+        expect(mockedBrowser.gotos()['http://loc.com']).to.equal(5);
+        expect(mockedBrowser.gotos()['http://test.com']).to.equal(1);
+        expect(mockedBrowser.gotos()['http://example.com/page1']).to.equal(1);
+        expect(mockedBrowser.gotos()['http://test1.com']).to.equal(1);
+        expect(mockedBrowser.gotos()['http://test2.com']).to.equal(1);
+        expect(mockedBrowser.gotos()['http://test3.com']).to.equal(1);
+        expect(mockedBrowser.gotos()['http://noop.com']).to.equal(1);
     });
 
-    it("wait step (in seconds) really waits, on the Node side", async () => {
+    it('wait step (in seconds) really waits, on the Node side', async () => {
         const calls: CallLog[] = [];
         const mockedBrowser = createMockedBrowser({}, calls);
 
@@ -123,7 +123,7 @@ scenarios:
         expect(calls.filter(c => c.method === 'evaluate')).to.have.lengthOf(0);
     });
 
-    it("click step", async () => {
+    it('click step', async () => {
         const calls: CallLog[] = [];
         const mockedBrowser = createMockedBrowser({}, calls);
 
@@ -143,7 +143,7 @@ scenarios:
         expect(clickCalls[1].args[0]).to.equal('.nav-link');
     });
 
-    it("input step", async () => {
+    it('input step', async () => {
         const calls: CallLog[] = [];
         const mockedBrowser = createMockedBrowser({}, calls);
 
@@ -169,7 +169,7 @@ scenarios:
         expect(typeCalls[1].args[1]).to.equal('secret123');
     });
 
-    it("login flow with click and input steps", async () => {
+    it('login flow with click and input steps', async () => {
         const calls: CallLog[] = [];
         const mockedBrowser = createMockedBrowser({}, calls);
 
@@ -202,7 +202,7 @@ scenarios:
         ]);
     });
 
-    it("onPage callback receives correct context through full stack", async () => {
+    it('onPage callback receives correct context through full stack', async () => {
         const calls: CallLog[] = [];
         const mockedBrowser = createMockedBrowser({}, calls);
         const contexts: ScenarioContext[] = [];
@@ -234,26 +234,27 @@ scenarios:
         expect(worker1.map(c => c.iteration)).to.include.members([0, 1]);
     });
 
-    describe("error propagation", () => {
-        const failingBrowser = (failingUrl: string, visited: string[]) => ({
-            async newPage() {
-                let closed = false;
-                return {
-                    async goto(url: string) {
-                        visited.push(url);
-                        if (url === failingUrl) throw new Error(`cannot reach ${url}`);
-                    },
-                    async close() {
-                        closed = true;
-                    },
-                    isClosed() {
-                        return closed;
-                    },
-                };
-            },
-        } as any);
+    describe('error propagation', () => {
+        const failingBrowser = (failingUrl: string, visited: string[]) =>
+            ({
+                async newPage() {
+                    let closed = false;
+                    return {
+                        async goto(url: string) {
+                            visited.push(url);
+                            if (url === failingUrl) throw new Error(`cannot reach ${url}`);
+                        },
+                        async close() {
+                            closed = true;
+                        },
+                        isClosed() {
+                            return closed;
+                        },
+                    };
+                },
+            }) as any;
 
-        it("rejects with WorkerError details while still running every scenario", async () => {
+        it('rejects with WorkerError details while still running every scenario', async () => {
             const visited: string[] = [];
 
             const yamlContent = `
@@ -266,40 +267,48 @@ scenarios:
 
             let caught: unknown;
             try {
-                await readYamlAndInterpret(yamlContent, { browsers: { chrome: failingBrowser("http://broken.com", visited) } });
+                await readYamlAndInterpret(yamlContent, {
+                    browsers: { chrome: failingBrowser('http://broken.com', visited) },
+                });
             } catch (e) {
                 caught = e;
             }
 
             // The healthy scenario ran even though the first one failed
-            expect(visited).to.include("http://ok.com");
+            expect(visited).to.include('http://ok.com');
 
             expect(caught).to.be.instanceOf(AggregateError);
             const errors = (caught as AggregateError).errors;
             expect(errors).to.have.lengthOf(2);
             errors.forEach(err => {
                 expect(err).to.be.instanceOf(WorkerError);
-                expect(err.scenarioName).to.equal("Broken");
+                expect(err.scenarioName).to.equal('Broken');
                 expect(err.iteration).to.equal(0);
             });
             expect(errors.map(e => e.workerIndex)).to.deep.equal([0, 1]);
         });
 
-        it("resolves when every scenario succeeds", async () => {
-            await readYamlAndInterpret(`
+        it('resolves when every scenario succeeds', async () => {
+            await readYamlAndInterpret(
+                `
 scenarios:
-    - location: "http://ok.com"`, { browsers: { chrome: failingBrowser("http://never.com", []) } });
+    - location: "http://ok.com"`,
+                { browsers: { chrome: failingBrowser('http://never.com', []) } },
+            );
         });
 
-        it("rejects with BrowserLaunchError when the browser cannot be launched", async () => {
+        it('rejects with BrowserLaunchError when the browser cannot be launched', async () => {
             let caught: unknown;
             try {
-                await readYamlAndInterpret(`
+                await readYamlAndInterpret(
+                    `
 scenarios:
     - browser: firefox
-      location: "http://ok.com"`, {
-                    launchOptions: { firefox: { executablePath: "/nonexistent/firefox-binary" } },
-                });
+      location: "http://ok.com"`,
+                    {
+                        launchOptions: { firefox: { executablePath: '/nonexistent/firefox-binary' } },
+                    },
+                );
             } catch (e) {
                 caught = e;
             }
@@ -308,18 +317,19 @@ scenarios:
             const errors = (caught as AggregateError).errors;
             expect(errors).to.have.lengthOf(1);
             expect(errors[0]).to.be.instanceOf(BrowserLaunchError);
-            expect(errors[0].browser).to.equal("firefox");
+            expect(errors[0].browser).to.equal('firefox');
         });
     });
 
-    describe("onBrowser callback", () => {
-        it("is called once per browser used, before its scenarios start", async () => {
+    describe('onBrowser callback', () => {
+        it('is called once per browser used, before its scenarios start', async () => {
             const events: string[] = [];
             const chrome = createMockedBrowser();
             const firefox = createMockedBrowser();
             const unused = createMockedBrowser();
 
-            await readYamlAndInterpret(`
+            await readYamlAndInterpret(
+                `
 scenarios:
     - name: A
       workers: 2
@@ -329,61 +339,72 @@ scenarios:
       location: "http://b.com"
     - name: C
       browser: chrome
-      location: "http://c.com"`, {
-                browsers: { chrome, firefox },
-                onBrowser: async (browser, name) => {
-                    events.push(`browser ${name}`);
-                    expect(browser).to.equal(name === 'chrome' ? chrome : firefox);
-                    expect(browser).to.not.equal(unused);
+      location: "http://c.com"`,
+                {
+                    browsers: { chrome, firefox },
+                    onBrowser: async (browser, name) => {
+                        events.push(`browser ${name}`);
+                        expect(browser).to.equal(name === 'chrome' ? chrome : firefox);
+                        expect(browser).to.not.equal(unused);
+                    },
+                    onPage: async (_page, ctx) => {
+                        events.push(`page ${ctx.scenarioName}`);
+                    },
                 },
-                onPage: async (_page, ctx) => {
-                    events.push(`page ${ctx.scenarioName}`);
-                },
-            });
+            );
 
-            expect(events.filter(e => e.startsWith('browser')).sort()).to.deep.equal(['browser chrome', 'browser firefox']);
+            expect(events.filter(e => e.startsWith('browser')).sort()).to.deep.equal([
+                'browser chrome',
+                'browser firefox',
+            ]);
             // Every page of a browser opens after its callback
             expect(events.indexOf('page A')).to.be.above(events.indexOf('browser chrome'));
             expect(events.indexOf('page C')).to.be.above(events.indexOf('browser chrome'));
             expect(events.indexOf('page B')).to.be.above(events.indexOf('browser firefox'));
         });
 
-        it("is not called for a browser that no scenario uses", async () => {
+        it('is not called for a browser that no scenario uses', async () => {
             const names: string[] = [];
 
-            await readYamlAndInterpret(`
+            await readYamlAndInterpret(
+                `
 scenarios:
-    - location: "http://a.com"`, {
-                browsers: { chrome: createMockedBrowser(), firefox: createMockedBrowser() },
-                onBrowser: (_browser, name) => {
-                    names.push(name);
+    - location: "http://a.com"`,
+                {
+                    browsers: { chrome: createMockedBrowser(), firefox: createMockedBrowser() },
+                    onBrowser: (_browser, name) => {
+                        names.push(name);
+                    },
                 },
-            });
+            );
 
             expect(names).to.deep.equal(['chrome']);
         });
 
-        it("skips the scenarios of a browser when it throws, and reports a BrowserLaunchError", async () => {
+        it('skips the scenarios of a browser when it throws, and reports a BrowserLaunchError', async () => {
             const chromeCalls: CallLog[] = [];
             const firefoxCalls: CallLog[] = [];
             let caught: unknown;
 
             try {
-                await readYamlAndInterpret(`
+                await readYamlAndInterpret(
+                    `
 scenarios:
     - name: In Chrome
       location: "http://a.com"
     - name: In Firefox
       browser: firefox
-      location: "http://b.com"`, {
-                    browsers: {
-                        chrome: createMockedBrowser({}, chromeCalls),
-                        firefox: createMockedBrowser({}, firefoxCalls),
+      location: "http://b.com"`,
+                    {
+                        browsers: {
+                            chrome: createMockedBrowser({}, chromeCalls),
+                            firefox: createMockedBrowser({}, firefoxCalls),
+                        },
+                        onBrowser: async (_browser, name) => {
+                            if (name === 'chrome') throw new Error('cannot monitor it');
+                        },
                     },
-                    onBrowser: async (_browser, name) => {
-                        if (name === 'chrome') throw new Error('cannot monitor it');
-                    },
-                });
+                );
             } catch (e) {
                 caught = e;
             }
@@ -396,34 +417,39 @@ scenarios:
             expect(errors[0].message).to.include('cannot monitor it');
             // The scenarios of the other browser ran
             expect(chromeCalls.filter(c => c.method === 'goto')).to.have.lengthOf(0);
-            expect(firefoxCalls.filter(c => c.method === 'goto')).to.deep.equal([{ method: 'goto', args: ['http://b.com'] }]);
+            expect(firefoxCalls.filter(c => c.method === 'goto')).to.deep.equal([
+                { method: 'goto', args: ['http://b.com'] },
+            ]);
         });
     });
 
-    it("runs scenarios targeting the same browser in parallel", async () => {
+    it('runs scenarios targeting the same browser in parallel', async () => {
         const starts: Record<string, number> = {};
         const t0 = Date.now();
 
-        await readYamlAndInterpret(`
+        await readYamlAndInterpret(
+            `
 scenarios:
     - name: Slow
       location: "http://slow.com"
       steps:
         - wait: 0.3
     - name: Fast
-      location: "http://fast.com"`, {
-            browsers: { chrome: createMockedBrowser() },
-            onPage: async (_page, ctx) => {
-                starts[ctx.scenarioName] = Date.now() - t0;
+      location: "http://fast.com"`,
+            {
+                browsers: { chrome: createMockedBrowser() },
+                onPage: async (_page, ctx) => {
+                    starts[ctx.scenarioName] = Date.now() - t0;
+                },
             },
-        });
+        );
 
         // "Fast" does not wait for "Slow" to finish (which takes >= 300 ms)
-        expect(starts["Slow"]).to.be.below(150);
-        expect(starts["Fast"]).to.be.below(150);
+        expect(starts['Slow']).to.be.below(150);
+        expect(starts['Fast']).to.be.below(150);
     });
 
-    describe("configuration errors", () => {
+    describe('configuration errors', () => {
         const expectConfigurationErrorBeforeAnyPage = async (yamlContent: string, ...fragments: string[]) => {
             const calls: CallLog[] = [];
             let caught: unknown;
@@ -440,9 +466,10 @@ scenarios:
             expect(calls.filter(c => c.method === 'newPage')).to.have.lengthOf(0);
         };
 
-        it("rejects a missing environment variable before opening any page", async () => {
-            delete process.env["YP_TEST_MISSING_VAR"];
-            await expectConfigurationErrorBeforeAnyPage(`
+        it('rejects a missing environment variable before opening any page', async () => {
+            delete process.env['YP_TEST_MISSING_VAR'];
+            await expectConfigurationErrorBeforeAnyPage(
+                `
 scenarios:
     - name: Valid
       location: "http://ok.com"
@@ -451,19 +478,25 @@ scenarios:
       steps:
         - input:
             selector: "#password"
-            text: "\${YP_TEST_MISSING_VAR}"`, 'Scenario "Login"', '"YP_TEST_MISSING_VAR" is not set');
+            text: "\${YP_TEST_MISSING_VAR}"`,
+                'Scenario "Login"',
+                '"YP_TEST_MISSING_VAR" is not set',
+            );
         });
 
-        it("rejects an unknown key before opening any page", async () => {
-            await expectConfigurationErrorBeforeAnyPage(`
+        it('rejects an unknown key before opening any page', async () => {
+            await expectConfigurationErrorBeforeAnyPage(
+                `
 scenarios:
     - location: "http://ok.com"
-      iteration: 3`, "iteration");
+      iteration: 3`,
+                'iteration',
+            );
         });
     });
 
-    it("never logs typed texts nor resolved environment values", async () => {
-        process.env["YP_TEST_PASSWORD"] = "env-secret-42";
+    it('never logs typed texts nor resolved environment values', async () => {
+        process.env['YP_TEST_PASSWORD'] = 'env-secret-42';
         const logs: string[] = [];
         const logger = {
             debug: (m: string) => logs.push(m),
@@ -473,7 +506,8 @@ scenarios:
         };
 
         try {
-            await readYamlAndInterpret(`
+            await readYamlAndInterpret(
+                `
 scenarios:
     - location: "http://example.com/login"
       steps:
@@ -482,15 +516,17 @@ scenarios:
             text: "literal-secret-123"
         - input:
             selector: "#password"
-            text: "\${YP_TEST_PASSWORD}"`, { browsers: { chrome: createMockedBrowser() }, logger });
+            text: "\${YP_TEST_PASSWORD}"`,
+                { browsers: { chrome: createMockedBrowser() }, logger },
+            );
         } finally {
-            delete process.env["YP_TEST_PASSWORD"];
+            delete process.env['YP_TEST_PASSWORD'];
         }
 
         expect(logs).to.not.be.empty;
         for (const message of logs) {
-            expect(message).to.not.include("env-secret-42");
-            expect(message).to.not.include("literal-secret-123");
+            expect(message).to.not.include('env-secret-42');
+            expect(message).to.not.include('literal-secret-123');
         }
     });
 });

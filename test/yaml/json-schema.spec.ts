@@ -107,16 +107,25 @@ describe('JSON Schema', () => {
             ['unknown root key', 'scenario:\n  - location: "http://x"\n'],
             ['typo in a scenario key', 'scenarios:\n  - iteration: 3\n'],
             ['unknown key in an action', 'scenarios:\n  - actions:\n      - type: CLICK\n        selecter: "#a"\n'],
-            ['unknown key in options', 'scenarios:\n  - actions:\n      - type: GOTO\n        url: "http://x"\n        options:\n          waitUtil: load\n'],
+            [
+                'unknown key in options',
+                'scenarios:\n  - actions:\n      - type: GOTO\n        url: "http://x"\n        options:\n          waitUtil: load\n',
+            ],
             ['unknown action type', 'scenarios:\n  - actions:\n      - type: HOVER\n        selector: "#a"\n'],
             ['step mixing two shorthand keys', 'scenarios:\n  - steps:\n      - click: "#a"\n        wait: 2\n'],
             ['non-integer workers', 'scenarios:\n  - workers: 1.5\n'],
             ['zero iterations', 'scenarios:\n  - iterations: 0\n'],
             ['negative wait', 'scenarios:\n  - steps:\n      - wait: -1\n'],
             ['negative WAIT milliseconds', 'scenarios:\n  - actions:\n      - type: WAIT\n        milliseconds: -5\n'],
-            ['quality above 100', 'scenarios:\n  - actions:\n      - type: SCREENSHOT\n        path: a.jpg\n        options:\n          quality: 101\n'],
+            [
+                'quality above 100',
+                'scenarios:\n  - actions:\n      - type: SCREENSHOT\n        path: a.jpg\n        options:\n          quality: 101\n',
+            ],
             ['unsupported browser', 'scenarios:\n  - browser: safari\n'],
-            ['unknown waitUntil', 'scenarios:\n  - actions:\n      - type: GOTO\n        url: "http://x"\n        options:\n          waitUntil: idle\n'],
+            [
+                'unknown waitUntil',
+                'scenarios:\n  - actions:\n      - type: GOTO\n        url: "http://x"\n        options:\n          waitUntil: idle\n',
+            ],
             ['missing required field', 'scenarios:\n  - actions:\n      - type: TYPE\n        selector: "#a"\n'],
         ];
         for (const [label, content] of invalid) {

@@ -23,7 +23,9 @@ export class WorkerError extends Error {
     readonly iteration: number;
 
     constructor(scenarioName: string, workerIndex: number, iteration: number, cause: unknown) {
-        super(`Scenario "${scenarioName}" (worker ${workerIndex}, iteration ${iteration}) failed: ${describe(cause)}`, { cause });
+        super(`Scenario "${scenarioName}" (worker ${workerIndex}, iteration ${iteration}) failed: ${describe(cause)}`, {
+            cause,
+        });
         this.name = 'WorkerError';
         this.scenarioName = scenarioName;
         this.workerIndex = workerIndex;

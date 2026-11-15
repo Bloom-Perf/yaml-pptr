@@ -8,12 +8,16 @@ export const parseYaml = (yamlContent: string): RootYaml => {
     try {
         yamlStructure = yaml.load(yamlContent);
     } catch (e) {
-        throw new ConfigurationError(`Invalid YAML syntax: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
+        throw new ConfigurationError(`Invalid YAML syntax: ${e instanceof Error ? e.message : String(e)}`, {
+            cause: e,
+        });
     }
 
     const result = rootZod.safeParse(yamlStructure);
     if (!result.success) {
-        throw new ConfigurationError(`Invalid scenario configuration:\n${z.prettifyError(result.error)}`, { cause: result.error });
+        throw new ConfigurationError(`Invalid scenario configuration:\n${z.prettifyError(result.error)}`, {
+            cause: result.error,
+        });
     }
     return result.data;
 };

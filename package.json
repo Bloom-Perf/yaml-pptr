@@ -38,6 +38,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "mocha",
     "test:coverage": "c8 mocha",
+    "format": "prettier --write \"{src,test,scripts,examples}/**/*.ts\"",
+    "format:check": "prettier --check \"{src,test,scripts,examples}/**/*.ts\"",
     "example:login": "tsx examples/login-demo/run.ts",
     "example:load": "tsx examples/load-test/run.ts"
   },

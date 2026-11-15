@@ -1,12 +1,6 @@
 import { YpLogger, dumbLogger } from '../core/logger.js';
 import { ConfigurationError } from '../core/errors.js';
-import {
-    Action,
-    ActionType,
-    Scenario,
-    NavigateAction,
-    Run,
-} from '../core/model.js';
+import { Action, ActionType, Scenario, NavigateAction, Run } from '../core/model.js';
 import { RootYaml, ScenarioYaml, ActionYaml, StepYaml } from './validator.js';
 
 type EnvVarResolve = (name: string) => string;
@@ -25,7 +19,8 @@ const PER_WORKER_VAR = /^\$([A-Za-z_][A-Za-z0-9_]*)\[workerIndex\]$/;
 /** `${VAR}` placeholders, `$${` being an escaped literal `${`. */
 const PLACEHOLDER = /\$\$\{|\$\{([^}]*)\}/g;
 
-const PER_WORKER_HINT = 'per-worker values ("$VAR[workerIndex]") are only supported as the whole value of location and navigate';
+const PER_WORKER_HINT =
+    'per-worker values ("$VAR[workerIndex]") are only supported as the whole value of location and navigate';
 
 /**
  * Transforms the validated YAML into the domain model and resolves
@@ -57,7 +52,7 @@ export class Resolver {
             workers: scenarioYaml.workers || 1,
         };
         this.logger.debug(
-            `Resolving scenario "${ctx.name}" (${scenarioYaml.steps?.length ?? 0} step(s), ${scenarioYaml.actions?.length ?? 0} action(s))`
+            `Resolving scenario "${ctx.name}" (${scenarioYaml.steps?.length ?? 0} step(s), ${scenarioYaml.actions?.length ?? 0} action(s))`,
         );
 
         const actions: Action[] = [];
@@ -72,12 +67,15 @@ export class Resolver {
                 actions.push(this.resolveAction(action));
             }
         } catch (e) {
-            throw new ConfigurationError(`Scenario "${ctx.name}": ${e instanceof Error ? e.message : String(e)}`, { cause: e });
+            throw new ConfigurationError(`Scenario "${ctx.name}": ${e instanceof Error ? e.message : String(e)}`, {
+                cause: e,
+            });
         }
 
-        const run: Run = scenarioYaml.run === 'SEQUENTIAL'
-            ? { delaySecondsBetweenWorkerInits: scenarioYaml.initialDelaySeconds || 0 }
-            : { initialDelaySeconds: scenarioYaml.initialDelaySeconds || 0 };
+        const run: Run =
+            scenarioYaml.run === 'SEQUENTIAL'
+                ? { delaySecondsBetweenWorkerInits: scenarioYaml.initialDelaySeconds || 0 }
+                : { initialDelaySeconds: scenarioYaml.initialDelaySeconds || 0 };
 
         return {
             name: ctx.name,
@@ -180,13 +178,15 @@ export class Resolver {
         const perWorker = PER_WORKER_VAR.exec(location);
         if (perWorker) {
             const name = perWorker[1];
-            const values = this.env(name).split(',').map(v => v.trim());
+            const values = this.env(name)
+                .split(',')
+                .map(v => v.trim());
             if (values.some(v => v === '')) {
                 throw new Error(`environment variable "${name}" (used as "${location}") contains an empty value`);
             }
             if (values.length < ctx.workers) {
                 throw new Error(
-                    `environment variable "${name}" (used as "${location}") provides ${values.length} value(s) for ${ctx.workers} worker(s)`
+                    `environment variable "${name}" (used as "${location}") provides ${values.length} value(s) for ${ctx.workers} worker(s)`,
                 );
             }
             return { actionType: ActionType.Navigate, location: { workerIndex: values } };
@@ -204,7 +204,7 @@ export class Resolver {
         if (/^\$[A-Za-z_]/.test(value)) {
             throw new Error(
                 `unsupported environment variable reference "${value}": use "$VAR" for the whole value or "\${VAR}" inside a value` +
-                (value.endsWith('[workerIndex]') ? `; ${PER_WORKER_HINT}` : '')
+                    (value.endsWith('[workerIndex]') ? `; ${PER_WORKER_HINT}` : ''),
             );
         }
         return this.interpolate(value);
@@ -219,7 +219,7 @@ export class Resolver {
             if (name === undefined || !ENV_NAME.test(name)) {
                 throw new Error(
                     `invalid placeholder "${match}": expected \${VAR_NAME}` +
-                    (name?.endsWith('[workerIndex]') ? `; ${PER_WORKER_HINT}` : '')
+                        (name?.endsWith('[workerIndex]') ? `; ${PER_WORKER_HINT}` : ''),
                 );
             }
             return this.env(name);
