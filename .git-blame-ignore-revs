@@ -1,0 +1,5 @@
+# Commits that only reformat the code, skipped by `git blame` on GitHub.
+# Locally: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: format the TypeScript with Prettier and check it in CI (#344)
+ae3a950d48efbe6c39ced160a3debd3eca2a2c74
